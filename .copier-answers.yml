@@ -1,0 +1,22 @@
+# Changes here will be overwritten by Copier
+_commit: f34f3d7
+_src_path: gh:alleninstitute/copier-pdm-npc
+add_requirements_txt: true
+author_email: ben.hardcastle@alleninstitue.org
+author_fullname: Ben Hardcastle
+author_username: bjhardcastle
+build_doc: true
+copyright_date: '2024'
+copyright_holder: Allen Institute for Neural Dynamics
+copyright_holder_email: ''
+copyright_license: MIT
+package_version: 0.1.0
+project_description: Tools for processing stim data from Sam's DynamicRoutingTask,
+    compatible with data in the cloud.
+project_name: npc_samstim
+python_package_distribution_name: npc-samstim
+python_package_import_name: npc_samstim
+python_package_requires_python: '>=3.9'
+repository_name: npc_samstim
+repository_namespace: AllenInstitute
+
