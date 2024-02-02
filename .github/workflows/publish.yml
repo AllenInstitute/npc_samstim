@@ -5,6 +5,7 @@ name: Publish Python package
 
 on:
   push:
+    branches: [ "main" ] 
     paths: # pushing any files/folders marked ! will not trigger the workflow (exceptions can be added)
       - '**'
       - '!**.ipynb'
@@ -16,6 +17,17 @@ on:
       - '!**.md'
       - '!**.yml'
       - '.github/workflows/publish.yml'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.ipynb'
+      - '**.json'
+      - '.vscode'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'notebooks/**'
+      - '**.md'
+      - '**.yml'
   workflow_dispatch:  # adds a 'Run Workflow' button for manual launching
 
 concurrency: # jobs currently running on main will be cancelled when this workflow starts
