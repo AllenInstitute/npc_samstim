@@ -16,6 +16,7 @@ conda activate npc_samstim
 pip install npc_samstim
 ```
 
+## Python
 ```python
 >>> import npc_samstim
 ```
