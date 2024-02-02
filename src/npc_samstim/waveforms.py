@@ -20,11 +20,6 @@ import tqdm
 
 logger = logging.getLogger(__name__)
 
-FIRST_SOUND_ON_SYNC_DATE = datetime.date(2023, 8, 31)
-"""Prior to this date, there's no sync line with "sound running" signal: need to
-use NI-DAQ analog recording on OpenEphys PXI"""
-
-
 class WaveformModality(enum.Enum):
     SOUND = enum.auto()
     OPTO = enum.auto()
@@ -864,9 +859,7 @@ def get_stim_latencies_from_sync(
     stim = npc_stim.get_h5_stim_data(stim_file_or_dataset)
     sync = npc_sync.get_sync_data(sync)
     if not line_index_or_label:
-        line_index_or_label = get_sync_line_for_stim_onset(
-            waveform_type=waveform_type, date=sync.start_time.date()
-        )
+        line_index_or_label = sync.get_line_for_stim_onset(waveform_type)
     if not sync.get_rising_edges(line_index_or_label).any():
         raise MissingSyncLineError(
             f"No edges found for {line_index_or_label = } in {sync = }"
@@ -898,22 +891,6 @@ def get_stim_latencies_from_sync(
             latency=onset_following_trigger - trigger_time,
         )
     return tuple(recordings)
-
-
-def get_sync_line_for_stim_onset(
-    waveform_type: str | Literal["sound", "audio", "opto"],
-    date: datetime.date | None = None,
-) -> int:
-    if any(label in waveform_type for label in ("aud", "sound")):
-        if date and date < FIRST_SOUND_ON_SYNC_DATE:
-            raise ValueError(
-                f"Sound only recorded on sync since {FIRST_SOUND_ON_SYNC_DATE.isoformat()}: {date = }"
-            )
-        return 1
-    elif "opto" in waveform_type:
-        return 11
-    else:
-        raise ValueError(f"Unexpected value: {waveform_type = }")
 
 
 def get_nidaq_channel_for_stim_onset(
