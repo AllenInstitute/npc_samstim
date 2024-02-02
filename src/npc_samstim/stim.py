@@ -10,6 +10,8 @@ import numpy as np
 from DynamicRoutingTask.Analysis.DynamicRoutingAnalysisUtils import DynRoutData
 
 logger = logging.getLogger(__name__)
+
+
 def get_sam(
     stim_path_or_data: npc_io.PathLike | h5py.File,
 ) -> DynRoutData:

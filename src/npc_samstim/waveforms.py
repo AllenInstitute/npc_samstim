@@ -845,7 +845,6 @@ def get_stim_latencies_from_nidaq_recording(
     return recordings
 
 
-
 class MissingSyncLineError(IndexError):
     pass
 
@@ -927,4 +926,3 @@ def get_nidaq_channel_for_stim_onset(
         return 5
     else:
         raise ValueError(f"Unexpected value: {waveform_type = }")
-
