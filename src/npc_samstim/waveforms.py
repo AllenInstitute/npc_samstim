@@ -20,6 +20,7 @@ import tqdm
 
 logger = logging.getLogger(__name__)
 
+
 class WaveformModality(enum.Enum):
     SOUND = enum.auto()
     OPTO = enum.auto()
