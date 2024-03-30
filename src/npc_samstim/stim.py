@@ -60,7 +60,7 @@ def is_galvo_opto(
         ):  # trialGalvoVoltage is the original format, pre-March 2024
             if (
                 voltage := getattr(
-                    get_sam(stim_path_or_data), "trialGalvoVoltage", None
+                    get_sam(stim_path_or_data), param, None
                 )
             ) is not None:
                 return not all(np.isnan(a).any() for a in voltage)
