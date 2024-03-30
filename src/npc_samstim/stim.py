@@ -54,9 +54,7 @@ def is_galvo_opto(
     False
     """
     with contextlib.suppress(TypeError, AttributeError):
-        return bool(
-            (voltage := getattr(get_sam(stim_path_or_data), "trialGalvoVoltage", None))
-            is not None
-            and not all(np.isnan(a).any() for a in voltage)
-        )
+        for param in ('trialGalvoX','trialGalvoVoltage'): # trialGalvoVoltage is the original format, pre-March 2024
+            if (voltage := getattr(get_sam(stim_path_or_data), "trialGalvoVoltage", None)) is not None:
+                return not all(np.isnan(a).any() for a in voltage)
     return False
