@@ -50,7 +50,7 @@ def is_galvo_opto(
     """
     >>> is_galvo_opto('s3://aind-ephys-data/ecephys_670248_2023-08-01_11-27-17/behavior/DynamicRouting1_670248_20230801_120304.hdf5')
     True
-    >>> is_galvo_opto('s3://aind-scratch-data/ben.hardcastle/DynamicRoutingTask/Data/677352/DynamicRouting1_677352_20231013_155330.hdf5')
+    >>> is_galvo_opto('s3://aind-scratch-data/dynamic-routing/DynamicRoutingTask/Data/677352/DynamicRouting1_677352_20231013_155330.hdf5')
     False
     """
     with contextlib.suppress(TypeError, AttributeError):
