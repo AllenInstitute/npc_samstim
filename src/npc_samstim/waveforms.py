@@ -843,6 +843,7 @@ def get_stim_latencies_from_nidaq_recording(
 
     return recordings
 
+
 def get_waveforms_from_nidaq_recording(
     start_times_on_sync: Iterable[float],
     duration_sec: float,
@@ -854,7 +855,7 @@ def get_waveforms_from_nidaq_recording(
 ) -> tuple[SimpleWaveform | None, ...]:
     """
     resulting length of samples will be original * resampling_factor, if not None
-    
+
     >>> stim = 's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/behavior/DynamicRouting1_668755_20230831_131418.hdf5'
     >>> sync = 's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/behavior/20230831T123331.h5'
     >>> recording_dirs = (
@@ -890,14 +891,17 @@ def get_waveforms_from_nidaq_recording(
         waveform_type, date=sync.start_time.date()
     )
     # convert times on sync to times on nidaq
-    nidaq_start_samples = np.around((start_times_on_sync - nidaq_timing.start_time) * nidaq_timing.sampling_rate).astype(int)
+    nidaq_start_samples = np.around(
+        (start_times_on_sync - nidaq_timing.start_time) * nidaq_timing.sampling_rate
+    ).astype(int)
     nidaq_duration_samples = round(duration_sec * nidaq_timing.sampling_rate)
+
     def _get_waveform(
         start_sample: int,
         start_time: float,
     ) -> SimpleWaveform | None:
         nidaq_samples = nidaq_data[
-            start_sample: start_sample + nidaq_duration_samples,
+            start_sample : start_sample + nidaq_duration_samples,
             nidaq_channel,
         ]
         if not nidaq_samples.any():
@@ -918,9 +922,9 @@ def get_waveforms_from_nidaq_recording(
                 name=f"{start_time:.3f} s",
                 modality=WaveformModality.from_factory(waveform_type),
                 sampling_rate=sampling_rate,
-                samples=nidaq_samples, # type: ignore[arg-type]
+                samples=nidaq_samples,  # type: ignore[arg-type]
             )
-            
+
     waveforms: list[SimpleWaveform | None]
     use_threading = isinstance(nidaq_data, zarr.Array)
     if use_threading:
@@ -935,7 +939,9 @@ def get_waveforms_from_nidaq_recording(
                 ncols=80,
                 ascii=False,
             ):
-                future = executor.submit(_get_waveform, start_sample=start_sample, start_time=start_time)
+                future = executor.submit(
+                    _get_waveform, start_sample=start_sample, start_time=start_time
+                )
                 future_to_idx[future] = idx
             for future in concurrent.futures.as_completed(future_to_idx):
                 idx = future_to_idx[future]
@@ -955,9 +961,10 @@ def get_waveforms_from_nidaq_recording(
             ascii=False,
         ):
             waveforms.append(_get_waveform(start_sample, start_time))
-            
+
     assert len(waveforms) == len(start_times_on_sync)
     return tuple(waveforms)
+
 
 class MissingSyncLineError(IndexError):
     pass
@@ -1023,7 +1030,8 @@ def get_nidaq_channel_for_stim_onset(
     else:
         raise ValueError(f"Unexpected value: {waveform_type = }")
 
+
 if __name__ == "__main__":
     from npc_samstim import testmod
-    
+
     testmod()
