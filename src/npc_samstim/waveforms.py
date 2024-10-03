@@ -864,7 +864,7 @@ def get_waveforms_from_nidaq_recording(
     ... )
     >>> w = get_waveforms_from_nidaq_recording([100, 500], 1, sync, recording_dirs, 'sound', resampling_factor=.1) # doctest:+ELLIPSIS
     """
-    start_times_on_sync = np.array(start_times_on_sync)
+    start_times_on_sync = np.fromiter(start_times_on_sync)
     sync = npc_sync.get_sync_data(sync)
     if not nidaq_device_name:
         nidaq_device = npc_ephys.get_pxi_nidaq_info(recording_dirs)
