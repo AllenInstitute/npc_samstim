@@ -121,7 +121,7 @@ class SimpleWaveform(Waveform):
 
 class LazyWaveform(Waveform):
     """Pass a function with args and kwargs used to generate the waveform
-    on-demand, to avoid carrying round arrays in memory
+    on-demand, to avoid carrying around many not-so-small arrays in memory.
 
     If the function is wrapped with functools.cache or similar, then we
     waveforms available immediately and stored only once for each unique
