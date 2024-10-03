@@ -931,7 +931,9 @@ def get_waveforms_from_nidaq_recording(
         waveforms = [None] * len(nidaq_start_samples)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_idx = {}
-            for idx, (start_sample, start_time) in enumerate(zip(nidaq_start_samples, start_times_on_sync)):
+            for idx, (start_sample, start_time) in enumerate(
+                zip(nidaq_start_samples, start_times_on_sync)
+            ):
                 future = executor.submit(
                     _get_waveform, start_sample=start_sample, start_time=start_time
                 )
