@@ -931,19 +931,19 @@ def get_waveforms_from_nidaq_recording(
         waveforms = [None] * len(nidaq_start_samples)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_idx = {}
-            for idx, (start_sample, start_time) in tqdm.tqdm(
-                iterable=enumerate(zip(nidaq_start_samples, start_times_on_sync)),
+            for idx, (start_sample, start_time) in enumerate(zip(nidaq_start_samples, start_times_on_sync)):
+                future = executor.submit(
+                    _get_waveform, start_sample=start_sample, start_time=start_time
+                )
+                future_to_idx[future] = idx
+            for future in tqdm.tqdm(
+                iterable=concurrent.futures.as_completed(future_to_idx),
                 desc=f"fetching data from {nidaq_device.device.name}",
                 unit="segments",
                 total=len(nidaq_start_samples),
                 ncols=80,
                 ascii=False,
             ):
-                future = executor.submit(
-                    _get_waveform, start_sample=start_sample, start_time=start_time
-                )
-                future_to_idx[future] = idx
-            for future in concurrent.futures.as_completed(future_to_idx):
                 idx = future_to_idx[future]
                 waveforms[idx] = future.result()
         if all(w is None for w in waveforms):
