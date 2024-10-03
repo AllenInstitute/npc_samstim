@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import dataclasses
 import datetime
 import enum
@@ -16,7 +17,9 @@ import npc_sync
 import numba
 import numpy as np
 import numpy.typing as npt
+import scipy.signal
 import tqdm
+import zarr
 
 logger = logging.getLogger(__name__)
 
@@ -840,6 +843,121 @@ def get_stim_latencies_from_nidaq_recording(
 
     return recordings
 
+def get_waveforms_from_nidaq_recording(
+    start_times_on_sync: Iterable[float],
+    duration_sec: float,
+    sync: npc_sync.SyncPathOrDataset,
+    recording_dirs: Iterable[npc_io.PathLike],
+    waveform_type: Literal["sound", "audio", "opto"],
+    nidaq_device_name: str | None = None,
+    resampling_factor: int | float | None = None,
+) -> tuple[SimpleWaveform | None, ...]:
+    """
+    resulting length of samples will be original * resampling_factor, if not None
+    
+    >>> stim = 's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/behavior/DynamicRouting1_668755_20230831_131418.hdf5'
+    >>> sync = 's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/behavior/20230831T123331.h5'
+    >>> recording_dirs = (
+    ...     's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/ecephys_clipped/Record Node 102/experiment2/recording1',
+    ...     's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/ecephys_clipped/Record Node 103/experiment2/recording1',
+    ... )
+    >>> w = get_waveforms_from_nidaq_recording([100, 500], 1, sync, recording_dirs, 'sound', resampling_factor=.1) # doctest:+ELLIPSIS
+    """
+    start_times_on_sync = np.array(start_times_on_sync)
+    sync = npc_sync.get_sync_data(sync)
+    if not nidaq_device_name:
+        nidaq_device = npc_ephys.get_pxi_nidaq_info(recording_dirs)
+    else:
+        nidaq_device = next(
+            npc_ephys.get_ephys_timing_on_pxi(
+                recording_dirs=recording_dirs, only_devices_including=nidaq_device_name
+            )
+        )
+
+    nidaq_timing: npc_ephys.EphysTimingInfoOnSync = next(
+        npc_ephys.get_ephys_timing_on_sync(
+            sync=sync,
+            recording_dirs=recording_dirs,
+            devices=(nidaq_device,),
+        )
+    )
+
+    nidaq_data = npc_ephys.get_pxi_nidaq_data(
+        *recording_dirs,
+        device_name=nidaq_device.device.name,
+    )
+    nidaq_channel = get_nidaq_channel_for_stim_onset(
+        waveform_type, date=sync.start_time.date()
+    )
+    # convert times on sync to times on nidaq
+    nidaq_start_samples = np.around((start_times_on_sync - nidaq_timing.start_time) * nidaq_timing.sampling_rate).astype(int)
+    nidaq_duration_samples = round(duration_sec * nidaq_timing.sampling_rate)
+    def _get_waveform(
+        start_sample: int,
+        start_time: float,
+    ) -> SimpleWaveform | None:
+        nidaq_samples = nidaq_data[
+            start_sample: start_sample + nidaq_duration_samples,
+            nidaq_channel,
+        ]
+        if not nidaq_samples.any():
+            logger.warning(
+                f"Requested range {start_sample} to {start_sample + nidaq_duration_samples} on {nidaq_channel=} is out of bounds: {nidaq_data.shape=}"
+            )
+            return None
+        else:
+            if resampling_factor:
+                nidaq_samples = scipy.signal.resample(
+                    nidaq_samples,
+                    int(len(nidaq_samples) * resampling_factor),
+                )
+                sampling_rate = nidaq_timing.sampling_rate * resampling_factor
+            else:
+                sampling_rate = nidaq_timing.sampling_rate
+            return SimpleWaveform(
+                name=f"{start_time:.3f} s",
+                modality=WaveformModality.from_factory(waveform_type),
+                sampling_rate=sampling_rate,
+                samples=nidaq_samples, # type: ignore[arg-type]
+            )
+            
+    waveforms: list[SimpleWaveform | None]
+    use_threading = isinstance(nidaq_data, zarr.Array)
+    if use_threading:
+        waveforms = [None] * len(nidaq_start_samples)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_to_idx = {}
+            for idx, (start_sample, start_time) in tqdm.tqdm(
+                iterable=enumerate(zip(nidaq_start_samples, start_times_on_sync)),
+                desc=f"fetching data from {nidaq_device.device.name}",
+                unit="segments",
+                total=len(nidaq_start_samples),
+                ncols=80,
+                ascii=False,
+            ):
+                future = executor.submit(_get_waveform, start_sample=start_sample, start_time=start_time)
+                future_to_idx[future] = idx
+            for future in concurrent.futures.as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                waveforms[idx] = future.result()
+        if all(w is None for w in waveforms):
+            logger.warning(
+                f"No sound recording for any of the requested ranges {nidaq_start_samples} to {nidaq_start_samples + nidaq_duration_samples} on {nidaq_channel=} - setting latency=np.nan"
+            )
+    else:
+        waveforms = []
+        for start_sample, start_time in tqdm.tqdm(
+            iterable=zip(nidaq_start_samples, start_times_on_sync),
+            desc=f"fetching data from {nidaq_device.device.name}",
+            unit="segments",
+            total=len(nidaq_start_samples),
+            ncols=80,
+            ascii=False,
+        ):
+            waveforms.append(_get_waveform(start_sample, start_time))
+            
+    assert len(waveforms) == len(start_times_on_sync)
+    return tuple(waveforms)
 
 class MissingSyncLineError(IndexError):
     pass
