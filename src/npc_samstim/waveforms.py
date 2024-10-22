@@ -69,7 +69,7 @@ class Waveform(Protocol):
 
     @property
     def timestamps(self) -> npt.NDArray[np.float64]:
-        return np.arange(0, self.duration, 1 / self.sampling_rate)
+        return np.linspace(0.0, self.duration, len(self.samples), endpoint=False)
 
     def __eq__(self, other) -> bool:
         try:
