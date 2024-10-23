@@ -560,6 +560,11 @@ def generate_opto_waveforms(
     else:
         optoSampleRate = 2000
 
+    if "trialOptoOnsetFrame" in stim_data.keys():
+        trialOptoOnsetFrame = stim_data["trialOptoOnsetFrame"][:nTrials]
+    else:
+        trialOptoOnsetFrame = np.ones(nTrials) * stim_data["trialOptoOnsetFrame"]
+
     def device(array: npt.NDArray) -> npt.NDArray:
         if array.ndim > 1:
             return array[:, device_index or 0]
@@ -569,7 +574,7 @@ def generate_opto_waveforms(
     for trialnum in range(0, nTrials):
         if any(
             np.isnan(v[trialnum]) or v[trialnum] == 0
-            for v in (trialOptoDur, trialOptoVoltage)
+            for v in (trialOptoDur, trialOptoVoltage, trialOptoOnsetFrame)
         ):
             continue
 
@@ -901,7 +906,7 @@ def get_waveforms_from_nidaq_recording(
         start_time: float,
     ) -> SimpleWaveform | None:
         nidaq_samples = nidaq_data[
-            start_sample : start_sample + nidaq_duration_samples,
+            start_sample: start_sample + nidaq_duration_samples,
             nidaq_channel,
         ]
         if not nidaq_samples.any():
