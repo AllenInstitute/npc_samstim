@@ -906,7 +906,7 @@ def get_waveforms_from_nidaq_recording(
         start_time: float,
     ) -> SimpleWaveform | None:
         nidaq_samples = nidaq_data[
-            start_sample: start_sample + nidaq_duration_samples,
+            start_sample : start_sample + nidaq_duration_samples,
             nidaq_channel,
         ]
         if not nidaq_samples.any():
