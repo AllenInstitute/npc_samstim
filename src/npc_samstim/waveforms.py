@@ -572,13 +572,10 @@ def generate_opto_waveforms(
 
     waveforms: list[Waveform | None] = [None] * nTrials
     for trialnum in range(0, nTrials):
-        if (
-            any(
-                np.isnan(v[trialnum]) or v[trialnum] == 0
-                for v in (trialOptoDur, trialOptoVoltage)
-            )
-            or np.isnan(trialOptoOnsetFrame[trialnum])
-        ):
+        if any(
+            np.isnan(v[trialnum]) or v[trialnum] == 0
+            for v in (trialOptoDur, trialOptoVoltage)
+        ) or np.isnan(trialOptoOnsetFrame[trialnum]):
             continue
 
         if trialOptoSinFreq[trialnum] != 0:
