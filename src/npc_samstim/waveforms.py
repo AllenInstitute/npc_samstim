@@ -992,7 +992,10 @@ def get_stim_latencies_from_sync(
     stim = npc_stim.get_h5_stim_data(stim_file_or_dataset)
     sync = npc_sync.get_sync_data(sync)
     if line_index_or_label is None:
-        line_index_or_label = sync.get_line_for_stim_onset(waveform_type)
+        try:
+            line_index_or_label = sync.get_line_for_stim_onset(waveform_type)
+        except ValueError as exc:
+            raise MissingSyncLineError(f"{waveform_type=} not found on sync (see original exception above)") from exc
     if not sync.get_rising_edges(line_index_or_label).any():
         raise MissingSyncLineError(
             f"No edges found for {line_index_or_label = } in {sync = }"
