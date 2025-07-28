@@ -819,7 +819,7 @@ def get_stim_latencies_from_nidaq_recording(
     stim = npc_stim.get_h5_stim_data(stim_path)
 
     vsyncs = npc_stim.assert_stim_times(
-        npc_stim.get_stim_frame_times(stim_path, sync=sync_data, frame_time_type="vsync")[stim]
+        npc_stim.get_stim_frame_times(stim_path, sync=sync_data, frame_time_type="vsync")[stim_path]
     )
 
     num_trials = npc_stim.get_num_trials(stim)
