@@ -1004,7 +1004,7 @@ def get_stim_latencies_from_sync(
             f"No edges found for {line_index_or_label = } in {sync = }"
         )
     vsyncs = npc_stim.assert_stim_times(
-        npc_stim.get_stim_frame_times(stim_path, sync=sync, frame_time_type="vsync")[stim]
+        npc_stim.get_stim_frame_times(stim_path, sync=sync, frame_time_type="vsync")[stim_path]
     )
     trigger_times = tuple(
         vsyncs[idx] if idx is not None else None
