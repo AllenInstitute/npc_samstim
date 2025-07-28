@@ -760,7 +760,7 @@ def xcorr(
 
 def get_stim_latencies_from_nidaq_recording(
     stim_path: npc_io.PathLike,
-    sync_data: npc_sync.SyncPathOrDataset,
+    sync: npc_sync.SyncPathOrDataset,
     recording_dirs: Iterable[npc_io.PathLike],
     waveform_type: Literal["sound", "audio", "opto"],
     nidaq_device_name: str | None = None,
@@ -788,7 +788,7 @@ def get_stim_latencies_from_nidaq_recording(
     >>> latency = next(_ for _ in recordings if _ is not None).latency
     >>> assert 0 < latency < 0.1
     """
-    sync_data = npc_sync.get_sync_data(sync_data)
+    sync = npc_sync.get_sync_data(sync)
     if not nidaq_device_name:
         nidaq_device = npc_ephys.get_pxi_nidaq_info(recording_dirs)
     else:
@@ -800,7 +800,7 @@ def get_stim_latencies_from_nidaq_recording(
 
     nidaq_timing: npc_ephys.EphysTimingInfoOnSync = next(
         npc_ephys.get_ephys_timing_on_sync(
-            sync=sync_data,
+            sync=sync,
             recording_dirs=recording_dirs,
             devices=(nidaq_device,),
         )
@@ -812,7 +812,7 @@ def get_stim_latencies_from_nidaq_recording(
     )
 
     nidaq_channel = get_nidaq_channel_for_stim_onset(
-        waveform_type, date=sync_data.start_time.date()
+        waveform_type, date=sync.start_time.date()
     )
 
     stim_path = npc_io.from_pathlike(stim_path)
@@ -820,7 +820,7 @@ def get_stim_latencies_from_nidaq_recording(
 
     vsyncs = npc_stim.assert_stim_times(
         npc_stim.get_stim_frame_times(
-            stim_path, sync=sync_data, frame_time_type="vsync"
+            stim_path, sync=sync, frame_time_type="vsync"
         )[stim_path]
     )
 
