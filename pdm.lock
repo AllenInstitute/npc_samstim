@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:cb1ca923d35830d8e825c8e42e813bc075964785aa996d042d3f1b0ab71eb55f"
+content_hash = "sha256:f0aaae7897b8c4bcf75a0369ce81ca68002ab472020cd0bf1de7105976f7fab5"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -1812,7 +1812,7 @@ files = [
 
 [[package]]
 name = "npc-io"
-version = "0.1.21"
+version = "0.1.32"
 requires_python = ">=3.9"
 summary = "File IO tools for MindScope Neuropixels projects in the cloud."
 groups = ["default"]
@@ -1822,11 +1822,11 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "s3fs>=2023.12.2",
     "typing-extensions>=4.9.0",
-    "universal-pathlib>=0.1.4",
+    "universal-pathlib<0.2.0",
 ]
 files = [
-    {file = "npc-io-0.1.21.tar.gz", hash = "sha256:f81fca5d7238662d0dd643e3abea9b98a2ff82424214db74eecd131291e9ece5"},
-    {file = "npc_io-0.1.21-py3-none-any.whl", hash = "sha256:98caf8e88532e5db3d53e0a38841bd73512f79b4ace39b5d7fccbf540e298609"},
+    {file = "npc_io-0.1.32-py3-none-any.whl", hash = "sha256:5d324e0c335c6885c71a70faee18433d2e14a6c4128f39006c0fdb78190c9e25"},
+    {file = "npc_io-0.1.32.tar.gz", hash = "sha256:3d4c269e9ab1beac6466ba6dcb1665adf912ac9b5d44677680fd23eb777c9177"},
 ]
 
 [[package]]
@@ -1873,35 +1873,38 @@ files = [
 
 [[package]]
 name = "npc-stim"
-version = "0.1.1"
+version = "0.1.13"
 requires_python = ">=3.9"
 summary = "Tools for accessing and processing stim data, compatible with data in the cloud."
 groups = ["default"]
 dependencies = [
+    "npc-io>=0.1.26",
     "npc-session>=0.1.33",
-    "npc-sync>=0.1.2",
+    "npc-sync>=0.1.19",
+    "scipy>=1.12.0",
 ]
 files = [
-    {file = "npc-stim-0.1.1.tar.gz", hash = "sha256:e74572981ccb7afa6dc9a3419ddf76b481b968d5408ce45da1c1106656c41ae6"},
-    {file = "npc_stim-0.1.1-py3-none-any.whl", hash = "sha256:24e310b6a77ab019a062b8c8c207f6c1d6bb16e932dc7c5b5f197fc51a5406dd"},
+    {file = "npc_stim-0.1.13-py3-none-any.whl", hash = "sha256:9893681437c3dce27c0acaa4d6ffc6463d8ff999fab40b1faeeb5a6aeeae2226"},
+    {file = "npc_stim-0.1.13.tar.gz", hash = "sha256:c102aedf9ae77f6f650fbfb713ddbcf9bac44b7a8c77339ef8b894a0b838fce7"},
 ]
 
 [[package]]
 name = "npc-sync"
-version = "0.1.3"
+version = "0.1.24"
 requires_python = ">=3.9"
 summary = "Repackaging of AllenSDK.SyncDataset with extra functionality, compatible with data in the cloud."
 groups = ["default"]
 dependencies = [
     "h5py>=3.10.0",
     "matplotlib>=3.8.2",
-    "npc-io>=0.1.20",
+    "npc-io>=0.1.26",
+    "npc-session>=0.1.33",
     "numpy>=1.26.3",
     "typing-extensions>=4.9.0",
 ]
 files = [
-    {file = "npc-sync-0.1.3.tar.gz", hash = "sha256:ccecb090a77eff741aa524a4e9518bc03ea260eabf10f4a120245b80ccd68137"},
-    {file = "npc_sync-0.1.3-py3-none-any.whl", hash = "sha256:33e5a601899e7663c3b74ed69d19cbfb4adc76ba670f51fc84c35f3105dee5b2"},
+    {file = "npc_sync-0.1.24-py3-none-any.whl", hash = "sha256:d53d5d829169a49d4a53089ecaa35dbc0cbeda99f6dce4bb6e2f4cb32fe15bcb"},
+    {file = "npc_sync-0.1.24.tar.gz", hash = "sha256:fd9223e7448ba9e6ae497bc50b8a5ba0e92d64c47ff07fbe77110bf4465885a7"},
 ]
 
 [[package]]

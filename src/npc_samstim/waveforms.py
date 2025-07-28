@@ -978,7 +978,7 @@ class MissingSyncLineError(IndexError):
 
 
 def get_stim_latencies_from_sync(
-    stim_file_or_dataset: npc_stim.StimPathOrDataset,
+    stim_path: npc_io.PathLike,
     sync: npc_sync.SyncPathOrDataset,
     waveform_type: Literal["sound", "audio", "opto"],
     line_index_or_label: int | str | None = None,
@@ -989,7 +989,7 @@ def get_stim_latencies_from_sync(
     >>> latencies = get_stim_latencies_from_sync(stim, sync, waveform_type='sound')
     >>> assert 0 < next(_.latency for _ in latencies if _ is not None) < 0.1
     """
-    stim = npc_stim.get_h5_stim_data(stim_file_or_dataset)
+    stim = npc_stim.get_h5_stim_data(stim_path)
     sync = npc_sync.get_sync_data(sync)
     if line_index_or_label is None:
         try:
@@ -1003,11 +1003,11 @@ def get_stim_latencies_from_sync(
             f"No edges found for {line_index_or_label = } in {sync = }"
         )
     vsyncs = npc_stim.assert_stim_times(
-        npc_stim.get_stim_frame_times(stim, sync=sync, frame_time_type="vsync")[stim]
+        npc_stim.get_stim_frame_times(stim_path, sync=sync, frame_time_type="vsync")[stim]
     )
     trigger_times = tuple(
         vsyncs[idx] if idx is not None else None
-        for idx in npc_stim.get_stim_trigger_frames(stim, stim_type=waveform_type)
+        for idx in npc_stim.get_stim_trigger_frames(stim_path, stim_type=waveform_type)
     )
     stim_onsets = sync.get_rising_edges(line_index_or_label, units="seconds")
     recordings: list[StimRecording | None] = [None] * len(trigger_times)
