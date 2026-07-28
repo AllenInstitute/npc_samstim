@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import concurrent.futures
 import dataclasses
 import datetime
@@ -172,6 +173,26 @@ class LazyWaveform(Waveform):
     @property
     def samples(self) -> npt.NDArray[np.float64]:
         return self._fn(**self._kwargs)
+
+
+def _get_waveform_active_interval(waveform: Waveform) -> tuple[float, float]:
+    """Start and stop within a command buffer, matching TaskControl's opto marker.
+
+    TaskControl raises the opto marker wherever the analog command is positive.
+    Each sample is held for one sampling interval, so the stop is the boundary
+    after the final positive sample.
+    """
+    active_samples = np.flatnonzero(waveform.samples > 0)
+    if not active_samples.size:
+        logger.warning(
+            "No positive samples found in %s waveform; using the full buffer",
+            waveform.name,
+        )
+        return 0.0, waveform.duration
+    return (
+        float(active_samples[0] / waveform.sampling_rate),
+        float((active_samples[-1] + 1) / waveform.sampling_rate),
+    )
 
 
 @dataclasses.dataclass(frozen=True, eq=True)
@@ -570,6 +591,56 @@ def generate_opto_waveforms(
             return array[:, device_index or 0]
         return array
 
+    def opto_offset_voltage(trialnum: int) -> float:
+        offset_data = stim_data.get("optoOffsetVoltage")
+        if offset_data is None:
+            return 0.0
+
+        def scalar(value: Any) -> float:
+            try:
+                value = value[()]
+            except (IndexError, KeyError, TypeError):
+                pass
+            return float(np.asarray(value).flat[0])
+
+        if not hasattr(offset_data, "keys"):
+            return scalar(offset_data)
+
+        device_names = tuple(offset_data.keys())
+        if len(device_names) == 1:
+            return scalar(offset_data[device_names[0]])
+
+        trial_devices = stim_data.get("trialOptoDevice")
+        if trial_devices is not None:
+            devices: Any = trial_devices[trialnum]
+        else:
+            global_device = stim_data.get("optoDev")
+            if global_device is None:
+                global_device = stim_data.get("optoDevName")
+            if global_device is None:
+                raise ValueError(
+                    "Multiple opto offset voltages found without opto device metadata"
+                )
+            devices = global_device[()]
+
+        if isinstance(devices, bytes):
+            devices = devices.decode()
+        if isinstance(devices, str):
+            try:
+                devices = ast.literal_eval(devices)
+            except (SyntaxError, ValueError):
+                devices = (devices,)
+        if isinstance(devices, str) or not isinstance(devices, Iterable):
+            devices = (devices,)
+        selected_device = tuple(devices)[device_index or 0]
+        if isinstance(selected_device, bytes):
+            selected_device = selected_device.decode()
+        if selected_device not in device_names:
+            raise ValueError(
+                f"Opto offset voltage not found for device {selected_device!r}"
+            )
+        return scalar(offset_data[selected_device])
+
     waveforms: list[Waveform | None] = [None] * nTrials
     for trialnum in range(0, nTrials):
         if any(
@@ -595,6 +666,7 @@ def generate_opto_waveforms(
             freq=device(trialOptoSinFreq)[trialnum],
             onRamp=device(trialOptoOnRamp)[trialnum],
             offRamp=device(trialOptoOffRamp)[trialnum],
+            offset=opto_offset_voltage(trialnum),
         )
         assert waveform is not None and waveform.samples.any()
         waveforms[trialnum] = waveform
@@ -737,10 +809,24 @@ def xcorr(
 
         # lag, xcorr = _xcorr(interp_nidaq_samples_max, waveform_samples_max, interp_nidaq_times)
 
-        recordings[idx] = FlexStimRecording(
-            presentation=presentation,
-            latency=lag,
-        )
+        if presentation.waveform.modality is WaveformModality.OPTO:
+            active_start, active_stop = _get_waveform_active_interval(
+                presentation.waveform
+            )
+            recordings[idx] = FlexStimRecording(
+                presentation=presentation,
+                onset_time_on_sync=(
+                    presentation.trigger_time_on_sync + lag + active_start
+                ),
+                offset_time_on_sync=(
+                    presentation.trigger_time_on_sync + lag + active_stop
+                ),
+            )
+        else:
+            recordings[idx] = FlexStimRecording(
+                presentation=presentation,
+                latency=lag,
+            )
 
         xcorr_values.append(xcorr)
         # to verify:
@@ -986,7 +1072,15 @@ def get_stim_latencies_from_sync(
     waveform_type: Literal["sound", "audio", "opto"],
     line_index_or_label: int | str | None = None,
 ) -> tuple[StimRecording | None, ...]:
-    """
+    """Get stimulus timing from a hardware marker line on sync.
+
+    Opto offsets use the falling edge nearest the reconstructed end of active
+    output, bounded before the next onset. If an opto falling edge is missing,
+    the offset falls back to the recorded onset plus that trial's nominal
+    ``trialOptoDur``. This deliberately avoids using the generated opto
+    command-buffer duration, which also contains delay, ramp, and terminal
+    samples.
+
     >>> stim = 's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/behavior/DynamicRouting1_668755_20230831_131418.hdf5'
     >>> sync = 's3://aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/behavior/20230831T123331.h5'
     >>> latencies = get_stim_latencies_from_sync(stim, sync, waveform_type='sound')
@@ -1015,16 +1109,52 @@ def get_stim_latencies_from_sync(
         for idx in npc_stim.get_stim_trigger_frames(stim_path, stim_type=waveform_type)
     )
     stim_onsets = sync.get_rising_edges(line_index_or_label, units="seconds")
+    stim_offsets = (
+        sync.get_falling_edges(line_index_or_label, units="seconds")
+        if "opto" in waveform_type
+        else np.array([])
+    )
     recordings: list[StimRecording | None] = [None] * len(trigger_times)
     for idx, (trigger_time, waveform) in enumerate(
         zip(trigger_times, get_waveforms_from_stim_file(stim, waveform_type))
     ):
         if waveform is None:
             continue
-        assert trigger_time
-        onset_following_trigger = stim_onsets[
-            np.searchsorted(stim_onsets, trigger_time, side="right")
-        ]
+        assert trigger_time is not None
+        onset_idx = np.searchsorted(stim_onsets, trigger_time, side="right")
+        onset_following_trigger = stim_onsets[onset_idx]
+
+        offset_time_on_sync = None
+        if "opto" in waveform_type:
+            first_offset_idx = np.searchsorted(
+                stim_offsets, onset_following_trigger, side="right"
+            )
+            next_onset = (
+                stim_onsets[onset_idx + 1]
+                if onset_idx + 1 < len(stim_onsets)
+                else np.inf
+            )
+            end_offset_idx = np.searchsorted(stim_offsets, next_onset, side="left")
+            candidate_offsets = stim_offsets[first_offset_idx:end_offset_idx]
+            if candidate_offsets.size:
+                active_start, active_stop = _get_waveform_active_interval(waveform)
+                expected_offset = onset_following_trigger + active_stop - active_start
+                offset_time_on_sync = candidate_offsets[
+                    np.argmin(np.abs(candidate_offsets - expected_offset))
+                ]
+            else:
+                nominal_duration = float(
+                    np.asarray(stim["trialOptoDur"][idx]).flat[0]
+                )
+                offset_time_on_sync = onset_following_trigger + nominal_duration
+                logger.warning(
+                    "No falling edge found for opto trial %d after onset %.6f s; "
+                    "using nominal trialOptoDur %.6f s",
+                    idx,
+                    onset_following_trigger,
+                    nominal_duration,
+                )
+
         recordings[idx] = FlexStimRecording(
             presentation=StimPresentation(
                 trial_idx=idx,
@@ -1032,6 +1162,7 @@ def get_stim_latencies_from_sync(
                 trigger_time_on_sync=float(trigger_time),
             ),
             latency=onset_following_trigger - trigger_time,
+            offset_time_on_sync=offset_time_on_sync,
         )
     return tuple(recordings)
 
