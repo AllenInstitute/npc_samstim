@@ -1143,9 +1143,7 @@ def get_stim_latencies_from_sync(
                     np.argmin(np.abs(candidate_offsets - expected_offset))
                 ]
             else:
-                nominal_duration = float(
-                    np.asarray(stim["trialOptoDur"][idx]).flat[0]
-                )
+                nominal_duration = float(np.asarray(stim["trialOptoDur"][idx]).flat[0])
                 offset_time_on_sync = onset_following_trigger + nominal_duration
                 logger.warning(
                     "No falling edge found for opto trial %d after onset %.6f s; "
