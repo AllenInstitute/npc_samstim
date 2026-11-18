@@ -98,20 +98,41 @@ def ni_ao_sampling_rate(nominal_rate: float, timebase: float = 80e6) -> float:
 # --------------------------------------------------------------------------- #
 # recording clock
 # --------------------------------------------------------------------------- #
+def _cumulative_loss(
+    drop_positions: npt.NDArray[np.float64],
+    drop_sizes: npt.NDArray[np.float64],
+    k: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Samples lost at or before recorded sample index k (as `npc_ephys.sample_drops`)."""
+    if drop_positions.size == 0:
+        return np.zeros(np.shape(k))
+    o = np.argsort(drop_positions, kind="stable")
+    c = np.concatenate([[0.0], np.cumsum(drop_sizes[o])])
+    return c[np.searchsorted(drop_positions[o], k, side="right")]
+
+
 @dataclasses.dataclass(frozen=True)
 class SampleClock:
     """Maps a recording's sample index to time on the sync clock (and back).
 
-    `npc_ephys` aligns NI-DAQ samples to sync with a straight line through the
-    first and last matched barcodes. The two clocks drift non-linearly
-    (validated sessions show +/-100 us wander over a session), so
-    `from_barcodes` instead uses a least-squares line plus a moving average of
-    the residuals at every matched barcode (~30 s apart), interpolated.
+        t(k) = intercept + slope * (k + L(k)) + r(k)
+
+    - `slope`, `intercept`, and L(k) (samples lost by the acquisition system at or
+      before recorded sample k) follow `npc_ephys`' timing model
+      (`EphysTimingInfoOnSync.to_sync_time`)
+    - r(k) is a smooth correction: a moving average of the barcode residuals of that
+      model, interpolated. The NI-DAQ and sync clocks drift non-linearly (validated
+      sessions show up to ~+/-100 us wander over a session around a straight-line fit)
 
     >>> clock = SampleClock.linear(start_time=10.0, sampling_rate=30000.0)
     >>> float(clock.sample_to_time(30000))
     11.0
     >>> float(clock.time_to_sample(11.0))
+    30000.0
+    >>> clock = SampleClock(1 / 30000, 10.0, drop_positions=np.array([15000.0]), drop_sizes=np.array([300.0]))
+    >>> float(clock.sample_to_time(30000))  # 300 samples lost before sample 15000
+    11.01
+    >>> round(float(clock.time_to_sample(11.01)), 6)
     30000.0
     """
 
@@ -125,6 +146,14 @@ class SampleClock:
     knot_residuals: npt.NDArray[np.float64] = dataclasses.field(
         default_factory=lambda: np.array([0.0])
     )
+    drop_positions: npt.NDArray[np.float64] = dataclasses.field(
+        default_factory=lambda: np.array([], dtype=np.float64)
+    )
+    """recorded sample index of the first sample after each gap"""
+    drop_sizes: npt.NDArray[np.float64] = dataclasses.field(
+        default_factory=lambda: np.array([], dtype=np.float64)
+    )
+    """samples lost in each gap"""
 
     @classmethod
     def linear(cls, start_time: float, sampling_rate: float) -> SampleClock:
@@ -137,55 +166,105 @@ class SampleClock:
         sync_times: npt.ArrayLike,
         smoothing_window: int = 9,
         max_residual_sec: float = 5e-3,
+        base: SampleClock | None = None,
     ) -> SampleClock:
-        """`sample_numbers[i]` on the recording occurred at `sync_times[i]`."""
+        """`sample_numbers[i]` (recorded sample index) occurred at `sync_times[i]`.
+
+        - `base`: timing model to correct (e.g. from `npc_ephys`, including
+          dropped samples); if None, a least-squares line through the barcodes
+          (no drops)
+        """
         k = np.asarray(sample_numbers, dtype=np.float64)
         t = np.asarray(sync_times, dtype=np.float64)
         order = np.argsort(k)
         k, t = k[order], t[order]
         if len(k) < 2:
             raise ValueError("At least two matched barcodes are needed")
-        slope, intercept = np.polyfit(k, t, 1)
-        res = t - (slope * k + intercept)
-        ok = np.abs(res - np.median(res)) < max_residual_sec  # drop mismatched barcodes
-        k, t = k[ok], t[ok]
-        slope, intercept = np.polyfit(k, t, 1)
-        res = t - (slope * k + intercept)
+        if base is None:
+            slope, intercept = np.polyfit(k, t, 1)
+            res = t - (slope * k + intercept)
+            ok = np.abs(res - np.median(res)) < max_residual_sec  # mismatched barcodes
+            k, t = k[ok], t[ok]
+            slope, intercept = np.polyfit(k, t, 1)
+            base = cls(float(slope), float(intercept))
+        res = t - base.sample_to_time(k)
+        ok = np.abs(res - np.median(res)) < max_residual_sec
+        k, res = k[ok], res[ok]
         half = smoothing_window // 2
         smoothed = np.array(
             [res[max(0, i - half) : i + half + 1].mean() for i in range(len(res))]
         )
-        return cls(float(slope), float(intercept), k, smoothed)
+        return dataclasses.replace(base, knot_samples=k, knot_residuals=smoothed)
 
     @property
     def sampling_rate(self) -> float:
         """Mean sampling rate on the sync clock."""
         return 1 / self.slope
 
+    def samples_lost(self, sample: npt.ArrayLike) -> npt.NDArray[np.float64]:
+        """L(k): samples lost at or before recorded sample index k."""
+        return _cumulative_loss(
+            np.asarray(self.drop_positions, dtype=np.float64),
+            np.asarray(self.drop_sizes, dtype=np.float64),
+            np.asarray(sample, dtype=np.float64),
+        )
+
     def sample_to_time(self, sample: npt.ArrayLike) -> npt.NDArray[np.float64]:
         k = np.asarray(sample, dtype=np.float64)
         return (
-            self.slope * k
+            self.slope * (k + self.samples_lost(k))
             + self.intercept
             + np.interp(k, self.knot_samples, self.knot_residuals)
         )
 
+    def _acquisition_to_sample(
+        self, a: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
+        """Invert a = k + L(k) exactly (a inside a gap -> first sample after it)."""
+        pos = np.asarray(self.drop_positions, dtype=np.float64)
+        if pos.size == 0:
+            return a
+        o = np.argsort(pos, kind="stable")
+        pos = pos[o]
+        sizes = np.asarray(self.drop_sizes, dtype=np.float64)[o]
+        c = np.cumsum(sizes)
+        ends = pos + c  # acquisition count of the first sample after each gap
+        j = np.searchsorted(ends, a, side="right")  # drops fully before a
+        lost = np.concatenate([[0.0], c])[j]
+        k = a - lost
+        # a inside gap j (between its start and end): no sample, use the one after it
+        in_gap = (j < pos.size) & (a > np.concatenate([pos + c - sizes, [np.inf]])[j])
+        return np.where(in_gap, np.concatenate([pos, [np.inf]])[j], k)
+
     def time_to_sample(self, time: npt.ArrayLike) -> npt.NDArray[np.float64]:
+        """Inverse of `sample_to_time` (times inside a gap map to the sample after it)."""
         t = np.asarray(time, dtype=np.float64)
-        k = (t - self.intercept) / self.slope
-        for _ in range(
-            3
-        ):  # residual correction varies slowly: fixed-point converges fast
-            k = (
-                t
-                - self.intercept
-                - np.interp(k, self.knot_samples, self.knot_residuals)
-            ) / self.slope
+        k = self._acquisition_to_sample((t - self.intercept) / self.slope)
+        for _ in range(3):  # r(k) varies slowly: fixed point converges fast
+            r = np.interp(k, self.knot_samples, self.knot_residuals)
+            k = self._acquisition_to_sample((t - self.intercept - r) / self.slope)
         return k
 
+    def has_drop_within(self, first_sample: float, last_sample: float) -> bool:
+        """True if samples were lost between two recorded sample indices."""
+        return bool(
+            np.any(
+                (np.asarray(self.drop_positions) > first_sample)
+                & (np.asarray(self.drop_positions) <= last_sample)
+            )
+        )
+
     def local_linear(self, first_sample: int, num_samples: int) -> tuple[float, float]:
-        """(time of `first_sample`, local sampling rate) over a short segment."""
+        """(time of `first_sample`, local sampling rate) over a short segment
+        (assumes no dropped samples within it: see `has_drop_within`)."""
         t0, t1 = self.sample_to_time([first_sample, first_sample + num_samples])
+        if self.has_drop_within(first_sample, first_sample + num_samples):
+            lost = float(
+                np.diff(self.samples_lost([first_sample, first_sample + num_samples]))[
+                    0
+                ]
+            )
+            t1 = t1 - lost * self.slope
         return float(t0), float(num_samples / (t1 - t0))
 
 

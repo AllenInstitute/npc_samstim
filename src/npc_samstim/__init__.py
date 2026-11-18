@@ -1,5 +1,5 @@
 """
-    Tools for processing stim data from Sam's DynamicRoutingTask, compatible with data in the cloud.
+Tools for processing stim data from Sam's DynamicRoutingTask, compatible with data in the cloud.
 """
 
 import doctest

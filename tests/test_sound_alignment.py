@@ -164,3 +164,65 @@ def test_align_sound_marks_missing_or_unrelated_signal_as_nan(
     assert isinstance(recordings[1], waveforms.NullRecording)
     assert isinstance(recordings[2], waveforms.NullRecording)
     assert np.isnan(recordings[1].latency) and np.isnan(recordings[2].latency)
+
+
+def test_sample_clock_from_barcodes_on_drop_aware_base() -> None:
+    """Barcode residuals are smoothed around npc_ephys' model, which includes
+    dropped samples: a step in the residuals must not be smeared."""
+    rate = 30000.0
+    samples = np.arange(0, 3600 * rate, 30 * rate)
+    drop_at, lost = 1800 * rate + 123, 450.0
+    wander = 60e-6 * np.sin(samples / samples[-1] * np.pi)
+    base = sa.SampleClock(
+        1 / rate, 5.0, drop_positions=np.array([drop_at]), drop_sizes=np.array([lost])
+    )
+    times = base.sample_to_time(samples) + wander
+    clock = sa.SampleClock.from_barcodes(samples, times, base=base)
+    probe = np.array([drop_at - 1, drop_at, drop_at + 10 * rate])
+    truth = base.sample_to_time(probe) + 60e-6 * np.sin(probe / samples[-1] * np.pi)
+    assert np.max(np.abs(clock.sample_to_time(probe) - truth)) < 5e-6
+    np.testing.assert_allclose(clock.time_to_sample(truth), probe, atol=0.5)
+    # without the drop model, the step would be smeared over the smoothing window
+    naive = sa.SampleClock.from_barcodes(samples, times)
+    assert np.max(np.abs(naive.sample_to_time(probe) - truth)) > 1e-3
+
+
+def test_align_sound_trial_spanning_dropped_samples_is_nan(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(waveforms.tqdm, "tqdm", lambda iterable, **kwargs: iterable)
+    wf = _noise(4800)
+    presentations = tuple(
+        waveforms.StimPresentation(
+            trial_idx=i,
+            waveform=waveforms.SimpleWaveform("AM_noise", "sound", 48000, wf),
+            trigger_time_on_sync=t,
+        )
+        for i, t in enumerate((1.0, 2.0))
+    )
+    n = int(3 * NIDAQ_RATE)
+    rec = np.random.default_rng(5).normal(0, 0.01, n)
+    for t in (1.008, 2.008):
+        k0 = int(t * NIDAQ_RATE)
+        rec[k0 : k0 + 3100] += _record(
+            wf, t - k0 / NIDAQ_RATE, duration=3100 / NIDAQ_RATE
+        )
+    data = np.round(rec * 1e4).astype(np.int16)[:, None]
+    timing = types.SimpleNamespace(start_time=0.0, sampling_rate=NIDAQ_RATE)
+    clock = sa.SampleClock(
+        1 / NIDAQ_RATE,
+        0.0,
+        drop_positions=np.array([2.1 * NIDAQ_RATE]),
+        drop_sizes=np.array([3.0]),
+    )
+    recordings = waveforms.xcorr(
+        data,
+        timing,
+        0,
+        presentations,
+        clock=clock,
+        playback_model=DAQ_MODEL,
+        onset_correction_sec=0.0,
+    )
+    assert recordings[0].onset_time_on_sync == pytest.approx(1.008, abs=5e-6)
+    assert isinstance(recordings[1], waveforms.NullRecording)

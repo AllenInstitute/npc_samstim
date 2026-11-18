@@ -35,12 +35,16 @@ def is_opto(
     >>> is_opto('s3://aind-ephys-data/ecephys_670248_2023-08-01_11-27-17/behavior/DynamicRouting1_670248_20230801_120304.hdf5')
     True
     """
+    # read the hdf5 file directly: `get_sam()` depends on `DynamicRoutingTask`
+    # loading code that fails for some older files (e.g. ragged galvo voltages)
     with contextlib.suppress(TypeError):
-        return bool(
-            (onset := getattr(get_sam(stim_path_or_data), "trialOptoOnsetFrame", None))
-            is not None
-            and np.any(~np.isnan(onset.squeeze()))
-        )
+        stim_data = npc_stim.get_stim_data(stim_path_or_data)
+        if not isinstance(stim_data, h5py.File):
+            return False
+        if "trialOptoOnsetFrame" not in stim_data:
+            return False
+        onset = np.asarray(stim_data["trialOptoOnsetFrame"][:], dtype=float)
+        return bool(np.any(~np.isnan(onset.squeeze())))
     return False
 
 
@@ -54,12 +58,16 @@ def is_galvo_opto(
     False
     """
     with contextlib.suppress(TypeError, AttributeError):
+        stim_data = npc_stim.get_stim_data(stim_path_or_data)
+        if not isinstance(stim_data, h5py.File):
+            return False
         for param in (
             "trialGalvoX",
             "trialGalvoVoltage",
         ):  # trialGalvoVoltage is the original format, pre-March 2024
-            if (
-                voltage := getattr(get_sam(stim_path_or_data), param, None)
-            ) is not None:
-                return not all(np.isnan(a).any() for a in voltage)
+            if param in stim_data:
+                voltage = stim_data[param][:]
+                return not all(
+                    np.isnan(np.asarray(a, dtype=float)).any() for a in voltage
+                )
     return False

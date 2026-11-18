@@ -11,7 +11,7 @@ Tools for processing stim data from Sam's DynamicRoutingTask, compatible with da
 
 # Usage
 ```bash
-conda create -n npc_samstim python>=3.9
+conda create -n npc_samstim python>=3.11
 conda activate npc_samstim
 pip install npc_samstim
 ```

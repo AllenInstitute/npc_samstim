@@ -68,7 +68,7 @@ class Waveform(Protocol):
 
     @property
     def duration(self) -> float:
-        return len(self.samples) / self.sampling_rate
+        return float(len(self.samples) / self.sampling_rate)
 
     @property
     def timestamps(self) -> npt.NDArray[np.float64]:
@@ -358,9 +358,11 @@ class FlexStimRecording(StimRecording):
             return self._onset_time_on_sync
         assert self.latency is not None
         if self.presentation is not None:
-            return np.nansum([self.presentation.trigger_time_on_sync, self.latency])
+            return float(
+                np.nansum([self.presentation.trigger_time_on_sync, self.latency])
+            )
         assert self.trigger_time_on_sync is not None
-        return np.nansum([self.trigger_time_on_sync, self.latency])
+        return float(np.nansum([self.trigger_time_on_sync, self.latency]))
 
     @property
     def offset_time_on_sync(self) -> float:
@@ -757,13 +759,28 @@ def xcorr(
     )
 
 
+def _clock_from_timing(
+    nidaq_timing: npc_ephys.EphysTimingInfo,
+) -> sound_alignment.SampleClock:
+    """`npc_ephys` timing (affine + dropped samples, if available) as a SampleClock."""
+    drops = tuple(getattr(nidaq_timing, "drops", ()) or ())
+    return sound_alignment.SampleClock(
+        slope=1 / nidaq_timing.sampling_rate,
+        intercept=nidaq_timing.start_time,
+        drop_positions=np.array([p for p, _ in drops], dtype=np.float64),
+        drop_sizes=np.array([n for _, n in drops], dtype=np.float64),
+    )
+
+
 def get_nidaq_clock(
     sync: npc_sync.SyncPathOrDataset,
     nidaq_device: npc_ephys.EphysTimingInfoOnPXI,
+    nidaq_timing: npc_ephys.EphysTimingInfoOnSync,
     smoothing_window: int = 9,
 ) -> sound_alignment.SampleClock:
-    """NI-DAQ sample index -> sync time, from all matched barcodes (see
-    `sound_alignment.SampleClock.from_barcodes`)."""
+    """NI-DAQ sample index -> sync time: `npc_ephys`' timing model (affine fit to all
+    barcodes, plus dropped samples) with a smooth correction for clock wander from
+    the moving-average barcode residuals (see `sound_alignment.SampleClock`)."""
     sync = npc_sync.get_sync_data(sync)
     sync_times, sync_ids = npc_ephys.barcodes.extract_barcodes_from_times(
         on_times=sync.get_rising_edges("barcode_ephys", units="seconds"),
@@ -771,27 +788,28 @@ def get_nidaq_clock(
         total_time_on_line=sync.total_seconds,
     )
     device = nidaq_device.device
-    rate = nidaq_device.sampling_rate  # nominal
+    nominal_rate = float(nidaq_device.sampling_rate)
+    channel = getattr(npc_ephys.openephys, "BARCODE_TTL_CHANNEL", 1)
     dev_times, dev_ids = npc_ephys.barcodes.extract_barcodes_from_times(
-        on_times=device.ttl_sample_numbers[device.ttl_states > 0] / rate,
-        off_times=device.ttl_sample_numbers[device.ttl_states < 0] / rate,
-        total_time_on_line=device.ttl_sample_numbers[-1] / rate,
+        on_times=device.ttl_sample_numbers[device.ttl_states == channel] / nominal_rate,
+        off_times=device.ttl_sample_numbers[device.ttl_states == -channel]
+        / nominal_rate,
+        total_time_on_line=device.ttl_sample_numbers[-1] / nominal_rate,
     )
-    sync_ids, sync_times = np.asarray(sync_ids), np.asarray(sync_times)
-    dev_ids, dev_times = np.asarray(dev_ids), np.asarray(dev_times)
-    uniq_sync = {
-        i: t for i, t in zip(sync_ids, sync_times) if np.sum(sync_ids == i) == 1
-    }
-    uniq_dev = {i: t for i, t in zip(dev_ids, dev_times) if np.sum(dev_ids == i) == 1}
-    common = sorted(set(uniq_sync) & set(uniq_dev), key=lambda i: uniq_dev[i])
-    if len(common) < 2:
+    s, k = npc_ephys.sample_drops.pair_barcodes(
+        sync_times, sync_ids, np.asarray(dev_times) * nominal_rate, dev_ids
+    )
+    base = _clock_from_timing(nidaq_timing)
+    keep = npc_ephys.sample_drops.reject_mispairs(s, base.sample_to_time(k))
+    if keep.sum() < 2:
         raise ValueError(
             f"Fewer than two matched barcodes between sync and {device.name}"
         )
     return sound_alignment.SampleClock.from_barcodes(
-        sample_numbers=[uniq_dev[i] * rate for i in common],
-        sync_times=[uniq_sync[i] for i in common],
+        sample_numbers=k[keep],
+        sync_times=s[keep],
         smoothing_window=smoothing_window,
+        base=base,
     )
 
 
@@ -812,9 +830,10 @@ def align_sound(
 ) -> tuple[StimRecording | None, ...]:
     """Sound onsets from the NI-DAQ recording of the speaker signal.
 
-    - `clock`: NI-DAQ sample -> sync time; default is the linear `nidaq_timing`
-      (`get_stim_latencies_from_nidaq_recording` passes the barcode-smoothed
-      `get_nidaq_clock`)
+    - `clock`: NI-DAQ sample -> sync time; default is `nidaq_timing` (affine, plus
+      dropped samples if available); `get_stim_latencies_from_nidaq_recording`
+      passes the barcode-smoothed `get_nidaq_clock`
+    - trials whose NI-DAQ segment spans dropped samples get latency NaN
     - `search_window_sec`: onset search range relative to each trigger time
     - `playback_model`: if None, calibrated from `num_calibration_trials` trials
     - trials whose envelope correlation (any sound) or carrier correlation
@@ -826,9 +845,7 @@ def align_sound(
     """
     presentations = tuple(presentations)
     if clock is None:
-        clock = sound_alignment.SampleClock.linear(
-            nidaq_timing.start_time, nidaq_timing.sampling_rate
-        )
+        clock = _clock_from_timing(nidaq_timing)
     margin = 0.01  # sec, either side of the search window + waveform
     idx = [i for i, p in enumerate(presentations) if p is not None]
 
@@ -863,6 +880,14 @@ def align_sound(
     recordings: list[StimRecording | None] = [None] * len(presentations)
     usable = []
     for i in idx:
+        a, samples = segments[i]
+        if samples is not None and clock.has_drop_within(a, a + len(samples)):
+            logger.warning(
+                f"NI-DAQ samples were lost during trial {i} - setting latency=np.nan"
+            )
+            segments[i] = (a, None)
+            recordings[i] = NullRecording(presentation=presentations[i], latency=np.nan)
+            continue
         if segments[i][1] is None:
             logger.warning(f"No sound recording for trial {i} - setting latency=np.nan")
             recordings[i] = NullRecording(presentation=presentations[i], latency=np.nan)
@@ -1136,13 +1161,11 @@ def get_stim_latencies_from_nidaq_recording(
             )
         )
 
-    nidaq_timing: npc_ephys.EphysTimingInfoOnSync = next(
-        npc_ephys.get_ephys_timing_on_sync(
-            sync=sync,
-            recording_dirs=recording_dirs,
-            devices=(nidaq_device,),
-        )
-    )
+    nidaq_timing: npc_ephys.EphysTimingInfoOnSync = npc_ephys.get_ephys_timing_on_sync(
+        sync=sync,
+        recording_dirs=recording_dirs,
+        devices=(nidaq_device,),
+    )[0]
 
     nidaq_data = npc_ephys.get_pxi_nidaq_data(
         *recording_dirs,
@@ -1177,6 +1200,16 @@ def get_stim_latencies_from_nidaq_recording(
             trigger_time_on_sync=float(vsyncs[trigger_frames[idx]]),
         )
 
+    if not getattr(nidaq_timing, "is_valid", True):
+        logger.warning(
+            f"NI-DAQ timing on sync failed QC ({getattr(nidaq_timing, 'reason', '')}): "
+            f"{waveform_type} latencies set to np.nan"
+        )
+        return tuple(
+            None if p is None else NullRecording(presentation=p, latency=np.nan)
+            for p in presentations
+        )
+
     correlation_method_kwargs = dict(correlation_method_kwargs or {})
     if (
         correlation_method is xcorr
@@ -1184,7 +1217,9 @@ def get_stim_latencies_from_nidaq_recording(
         and "opto" not in waveform_type
     ):
         try:
-            correlation_method_kwargs["clock"] = get_nidaq_clock(sync, nidaq_device)
+            correlation_method_kwargs["clock"] = get_nidaq_clock(
+                sync, nidaq_device, nidaq_timing
+            )
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 f"Could not build barcode-smoothed NI-DAQ clock ({exc!r}): using linear timing"
@@ -1234,13 +1269,11 @@ def get_waveforms_from_nidaq_recording(
             )
         )
 
-    nidaq_timing: npc_ephys.EphysTimingInfoOnSync = next(
-        npc_ephys.get_ephys_timing_on_sync(
-            sync=sync,
-            recording_dirs=recording_dirs,
-            devices=(nidaq_device,),
-        )
-    )
+    nidaq_timing: npc_ephys.EphysTimingInfoOnSync = npc_ephys.get_ephys_timing_on_sync(
+        sync=sync,
+        recording_dirs=recording_dirs,
+        devices=(nidaq_device,),
+    )[0]
 
     nidaq_data = npc_ephys.get_pxi_nidaq_data(
         *recording_dirs,
