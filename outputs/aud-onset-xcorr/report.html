@@ -1,0 +1,694 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Auditory onset alignment report</title><style>
+@page { size: A4; margin: 14mm 13mm 14mm 13mm; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 9.6pt; line-height: 1.38; color: #111; }
+h1 { font-size: 17pt; margin: 0 0 4pt 0; } h2 { font-size: 13pt; margin: 14pt 0 4pt; border-bottom: 1px solid #bbb; }
+h3 { font-size: 11pt; margin: 10pt 0 3pt; }
+table { border-collapse: collapse; margin: 6pt 0; font-size: 8.4pt; page-break-inside: avoid; }
+th, td { border: 1px solid #ccc; padding: 2pt 5pt; } th { background: #f0f0f0; }
+td:not(:first-child) { text-align: right; }
+img { max-width: 100%; page-break-inside: avoid; margin-top: 4pt; }
+p > em:only-child { font-size: 8.6pt; color: #333; }
+code { font-family: Consolas, monospace; font-size: 8.6pt; background: #f5f5f5; padding: 0 2px; }
+pre { background: #f5f5f5; padding: 6pt; font-size: 8pt; page-break-inside: avoid; }
+li { margin: 1pt 0; }
+</style></head><body><h1>Auditory stimulus onsets from the NI-DAQ speaker recording</h1>
+<p><em>npc_samstim. Validation against the sync "sound running" line, and a replacement for the correlation method. 2026-11-17.</em></p>
+<h2>Summary</h2>
+<p>Sessions recorded before 2023-08-31 have no sync line marking sound onset. For these, <code>npc_samstim</code> finds each sound by correlating the ideal waveform with the PXI NI-DAQ recording of the speaker signal (channel 1). Sessions from 2023-08-31 onward have both the NI-DAQ recording and a sync line driven by the same analog-output sample clock as the sound. That makes it possible to measure the error of any NI-DAQ-based method directly.</p>
+<p>The comparison used <strong>33 such sessions</strong> (2023-08-31 to 2023-12-14; 64 stim files; 21,069 sound trials):</p>
+<table>
+<thead>
+<tr>
+<th>Stimulus (validation set)</th>
+<th style="text-align: right;">Legacy <code>xcorr</code>: p95 |error|</th>
+<th style="text-align: right;">Legacy: trials &gt; 1 ms off</th>
+<th style="text-align: right;"><strong>New: median |error|</strong></th>
+<th style="text-align: right;"><strong>New: p95 |error|</strong></th>
+<th style="text-align: right;"><strong>New: max |error|</strong></th>
+<th style="text-align: right;">New: trials &gt; 1 ms off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task AM noise (n=7,245)</td>
+<td style="text-align: right;">109 µs</td>
+<td style="text-align: right;">2.2 %</td>
+<td style="text-align: right;"><strong>3.7 µs</strong></td>
+<td style="text-align: right;"><strong>10.4 µs</strong></td>
+<td style="text-align: right;">18 µs</td>
+<td style="text-align: right;">0 (165 rejected as NaN, see §4.3)</td>
+</tr>
+<tr>
+<td>RF-mapping AM noise (n=3,840)</td>
+<td style="text-align: right;">59 µs</td>
+<td style="text-align: right;">0 %</td>
+<td style="text-align: right;"><strong>3.7 µs</strong></td>
+<td style="text-align: right;"><strong>9.8 µs</strong></td>
+<td style="text-align: right;">16 µs</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>RF-mapping tones, 4–16 kHz (n=9,984)</td>
+<td style="text-align: right;"><strong>99.7 ms</strong></td>
+<td style="text-align: right;"><strong>85 %</strong></td>
+<td style="text-align: right;"><strong>35 µs</strong></td>
+<td style="text-align: right;"><strong>124 µs</strong></td>
+<td style="text-align: right;">0.87 ms</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The main finding is that the legacy method fails on pure tones.</strong> On 85 % of tone trials it is more than 1 ms wrong, typically by tens of ms and by up to 105 ms. Its <code>use_envelope=True</code> option is better but still more than 1 ms wrong on 12 % of tones, by up to 13 ms. Noise stimuli were already roughly right, with a +20–30 µs bias and about ±100 µs of slow drift.</p>
+<p>On the 55 older sessions (2022-07-26 to 2023-08-30; 96 stim files; 31,027 trials), the new and legacy methods agree to tens of µs for noise. <strong>For tones they disagree by more than 1 ms on 69–88 % of trials</strong> (by sound mode). This pattern matches the validated legacy failure. In total, 63 older stim files contain tones: every RF-mapping file, plus DR-task sessions that used tones.</p>
+<p>The new method, now the default for <code>waveform_type='sound'</code>:</p>
+<ol>
+<li><strong>Models playback physically.</strong> The NI-DAQ analog output is a zero-order hold (ZOH) at 80 MHz/1667 = 47,990.4 Hz, not 48 kHz. Sound-card output is modelled as band-limited. The effective rate is calibrated per stim file.</li>
+<li><strong>Finds onsets in two stages.</strong> A robust envelope correlation, evaluated over a fine grid of sub-sample phases, is followed by a carrier refinement within half a carrier period, used for noise only.</li>
+<li><strong>Maps NI-DAQ samples to sync time through all ~200 matched barcodes</strong>, smoothed. The existing map is a line through only the first and last barcode, and it misses about ±100 µs of non-linear clock drift.</li>
+<li><strong>Returns NaN latency</strong> when the recording does not match the waveform, instead of returning a wrong time.</li>
+</ol>
+<p>The changes are in <code>src/npc_samstim/sound_alignment.py</code> (new) and <code>src/npc_samstim/waveforms.py</code>. Tests are in <code>tests/test_sound_alignment.py</code>, and experiment code in <code>experiments/aud_xcorr/</code>.</p>
+<h2>1. Data and ground truth</h2>
+<ul>
+<li><strong>Signals.</strong><ul>
+<li>The PXI NI-DAQ (PXI-6133, about 30.03 kHz on the sync clock), channel 1, carries a copy of the speaker drive signal (Fig. 1).</li>
+<li>In <code>soundMode='daq'</code>, <code>TaskControl.loadSound</code> writes the sound to AO channel 0 and 5 V to AO channel 1 for every sample but the last, on the same sample clock (<a href="https://github.com/samgale/DynamicRoutingTask/blob/master/TaskControl.py">TaskControl.py</a>).</li>
+<li>AO channel 1 is the sync "sound running" line. From 2023-08-31 its rising edge marks sample 0 of the sound, so it is the ground truth. Its resolution is 10 µs (sync sampled at 100 kHz).</li>
+</ul>
+</li>
+<li><strong>Sessions.</strong> I listed all <code>s3://aind-ephys-data/ecephys_*</code> sessions from 2022-06 onward and kept those with a DynamicRouting1 or RFMapping stim file, a sync file and PXI NI-DAQ data. That gave 90 sessions, all on rig NP3.<ul>
+<li>Three could not be fully extracted, all because of upstream frame-time or file issues rather than this method: 660023 2023-08-08 and 644867 2023-02-21 (RF) failed npc_stim frame matching, and for 670181 2023-07-18 the stim file is dated 07-20.</li>
+<li>For the 3 sessions with two NI-DAQ recordings, the longer recording was used.</li>
+</ul>
+</li>
+<li><strong>Sound modes.</strong> <code>internal</code> (2022 to Feb 2023) and <code>sound card</code> (May 2023) are sound-card playback. <code>daq</code> (Jul 2023 onward) is NI-DAQ AO playback. <em>All validation sessions are <code>daq</code> mode</em> (see §6).</li>
+<li><strong>Stimuli.</strong> Task: AM noise, 0.5 s; older task sessions: tones. RF mapping: tones at 4–16 kHz in 1 kHz steps and AM noise, 0.25 s, with 5 ms Hanning ramps for tones.</li>
+<li>For every trial I cached the trigger time (vsync of the stimulus start frame), the sync onset and offset, the ideal waveform as used by <code>npc_samstim</code>, and NI-DAQ ch1 from 0.2 s before the trigger to 0.35 s after the sound ends. All methods were then compared offline on identical inputs.</li>
+<li><strong>Replica check.</strong> My offline replica of the legacy <code>xcorr</code> matches the library function exactly: max difference 0.0 s on 24 trials from 2 stim files, both raw and <code>use_envelope</code> (<code>experiments/aud_xcorr/results_check_baseline.txt</code>).</li>
+</ul>
+<p><img alt="Fig. 1" src="figures/fig1_signals.png" /></p>
+<p><em>Fig. 1. NI-DAQ ch1 for an AM-noise trial and a 12 kHz tone trial, session 668755 2023-08-31. Red: sync marker. Dotted: trigger vsync. Right panels: recorded samples against the ZOH playback model at 47,990 Hz, aligned at the estimated onset (NI-DAQ clock). The tone at 100 ms shows how strongly a 12 kHz tone is aliased at 30 kHz sampling.</em></p>
+<h2>2. What was wrong with the legacy method</h2>
+<p>The legacy method correlates the NI-DAQ samples with the ideal waveform linearly interpolated to the NI-DAQ rate. It uses non-normalized correlation, integer lags, ±150 ms around the trigger, and the npc_ephys linear clock. Four problems were found.</p>
+<ol>
+<li><strong>Tones are cycle-ambiguous, and the template is wrong for aliased tones.</strong><ul>
+<li>A 250 ms tone's correlation is a comb with one peak per carrier cycle. Adjacent peaks differ by about 10⁻⁴ (Fig. 2, right).</li>
+<li>Tones up to 16 kHz sampled at 30 kHz alias strongly, and linear interpolation of the 48 kHz waveform does not reproduce what the NI-DAQ records.</li>
+<li>Model mismatch is therefore much larger than the differences between peaks, and the argmax lands anywhere within the lag window (Fig. 2, left). Errors grow with frequency, from a p95 of 2.8 ms at 4 kHz to 103 ms at 16 kHz (Fig. 5).</li>
+</ul>
+</li>
+<li><strong>The DAC does not run at 48 kHz.</strong><ul>
+<li>NI-DAQmx derives the AO sample clock from an 80 MHz timebase, so 48 kHz becomes 80e6/1667 = 47,990.40 Hz (−200 ppm).</li>
+<li>Independent evidence: the marker is high for N−1 samples, and (N−1)/(marker high-time) = 47,990.24–47,990.32 Hz across all 64 validation files (Fig. 3, left). That is 2–3 ppm from 47,990.40 Hz, which is the sync-clock versus DAQ-crystal difference.</li>
+<li>A template 200 ppm too short is expected to bias the correlation peak by about half the stretch: +25 µs (0.25 s sounds) to +50 µs (0.5 s sounds). The observed legacy medians were +26 µs and +29 µs, with other error sources mixed in.</li>
+</ul>
+</li>
+<li><strong>The NI-DAQ→sync clock map is a line through only the first and last barcode.</strong><ul>
+<li>Real drift is smooth but non-linear, about ±100 µs over a session (Fig. 6). Every NI-DAQ-derived time inherits this error.</li>
+<li>The same map is used for opto timing from NI-DAQ data, which this report does not address.</li>
+</ul>
+</li>
+<li><strong>There is no failure detection.</strong> If the speaker signal is missing, a "best" lag is still returned.</li>
+</ol>
+<p><img alt="Fig. 2" src="figures/fig2_tone_failure.png" /></p>
+<p><em>Fig. 2. A 12 kHz tone trial. Left: legacy correlation over the ±150 ms lag window. Its maximum is 35 ms from the truth. Middle: envelope NCC of the new method, with one clear peak at the truth. Right: carrier NCC near the true onset, at 2 µs resolution, with nearly equal peaks every cycle.</em></p>
+<h2>3. New method</h2>
+<h3>3.1 Playback model and per-file calibration</h3>
+<p>The recorded signal is modelled as the ideal waveform w[n] played at an effective rate f_eff and point-sampled at the NI-DAQ sample times t_k. For an onset τ:</p>
+<ul>
+<li><strong>ZOH</strong> (NI-DAQ AO): x̂(t_k; τ) = w[ ⌊(t_k − τ) · f_eff⌋ ]</li>
+<li><strong>band-limited</strong> (sound card): x̂(t_k; τ) = (sinc-interpolated w)((t_k − τ) · f_eff), implemented by 16× polyphase upsampling plus linear interpolation.</li>
+</ul>
+<p>Both models include aliasing, because the template is evaluated at the actual NI-DAQ sample times rather than resampled.</p>
+<p>Per stim file, 12 evenly spaced trials are used to choose the reconstruction type and rate. The candidate rates are a ±400 ppm grid in 20 ppm steps, plus the 80 MHz-derived rate, then a 2 ppm refinement with a parabola fitted to the peak. The criterion is the median carrier correlation.</p>
+<p>Calibration recovers the physics without using metadata (Fig. 3, right):</p>
+<table>
+<thead>
+<tr>
+<th>Sound mode</th>
+<th style="text-align: right;">Files</th>
+<th>Chosen model</th>
+<th>Rate (ppm re. 48 kHz)</th>
+<th style="text-align: right;">Median r</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>daq</code></td>
+<td style="text-align: right;">101</td>
+<td>ZOH (66), band-limited (35)¹</td>
+<td>−199.1 to −201.7</td>
+<td style="text-align: right;">0.78–0.96</td>
+</tr>
+<tr>
+<td><code>internal</code></td>
+<td style="text-align: right;">58</td>
+<td>band-limited</td>
+<td>+0.7 to +10.4 (median +9.5)</td>
+<td style="text-align: right;">0.99</td>
+</tr>
+<tr>
+<td><code>sound card</code></td>
+<td style="text-align: right;">3</td>
+<td>band-limited</td>
+<td>+9.3 to +10.0</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+</tbody>
+</table>
+<p>¹ Mostly task files (31 of 35). In the one inspected (676909 2023-12-13) the speaker signal is low amplitude (about ±1,000 counts), and these files choose either model with r ≈ 0.78. Timing accuracy on these files is unaffected (§4). One file with no speaker signal calibrated to +123 ppm with r = 0.02 and is rejected trial by trial.</p>
+<p><img alt="Fig. 3" src="figures/fig3_playback_rate.png" /></p>
+<p><em>Fig. 3. Left: effective AO rate measured from the sync marker high-time. Right: per-file calibration result and its median correlation.</em></p>
+<h3>3.2 Two-stage onset search</h3>
+<ul>
+<li><strong>Stage A, envelope (robust).</strong><ul>
+<li>Normalized cross-correlation (NCC) of the 1 ms moving-RMS envelope of the recording with the envelope of x̂, over onsets from −20 ms to +250 ms re. the trigger.</li>
+<li>The aliased envelope of a tone depends strongly on sub-sample phase, a vernier effect from ZOH images aliasing back near the tone. The template is therefore evaluated at 16 sub-sample phases over the whole window, then at 128 phases within ±1.5 ms of the best match (tones only).</li>
+<li>Tone p95 error fell from 414 µs with 16 phases to 122 µs with 128, and to 116 µs with 256. 128 was chosen as the knee. Data: <code>experiments/aud_xcorr/exp_frac.py</code> output (8 sessions).</li>
+</ul>
+</li>
+<li><strong>Stage B, carrier (precise, aperiodic sounds only).</strong> NCC of the raw signal with x̂ within ± half the first autocorrelation side-peak lag of the template (half a period for tones; 0.25 ms for noise), at 1/32-sample resolution with parabolic refinement.<ul>
+<li>For periodic waveforms (tones) the stage A estimate is reported. In validation, stage B shifted tone estimates by a consistent 0.1–0.2 cycle, which wrapped to whole-cycle errors at 7, 9, 11, 13 and 15 kHz, i.e. a small phase mismatch in the model.</li>
+<li>Periodicity detection matched the stimulus label on all 187 sampled trials (tones periodic, AM noise aperiodic).</li>
+</ul>
+</li>
+</ul>
+<h3>3.3 Clock</h3>
+<p>t_sync(k) = a·k + b + r̃(k). Here (a, b) is a least-squares line through all matched barcodes, about one every 30 s, roughly 200 per session. r̃ is the 9-barcode (about 4.5 min) moving mean of the residuals, linearly interpolated. Each segment uses its local linear timing.</p>
+<p>Smoothing windows of 3–15 barcodes and a local-linear variant performed within about 3 µs of each other at p95 (<code>experiments/aud_xcorr/eval_clock.py</code>).</p>
+<h3>3.4 Constant offset</h3>
+<p>With the barcode clock, AM-noise onsets were a constant <strong>+19.7 µs</strong> late relative to the marker. Per-session medians were 14.5–25.5 µs over 33 sessions. This is subtracted (<code>NIDAQ_SOUND_ONSET_CORRECTION_SEC = -19.7e-6</code>).</p>
+<p>The likely cause is the relative timing of OpenEphys NI-DAQ TTL stamps (used for barcodes) and the analog samples, about half of a 33 µs sample, plus 2–4 µs of analog delay (fitted model delay). The mechanism is <strong>not verified</strong>. In validation statistics the offset is applied leave-one-session-out, so no session is scored with an offset fitted to itself.</p>
+<h3>3.5 Rejection</h3>
+<p>A trial gets latency NaN (<code>NullRecording</code>) if the envelope r is below 0.5, or, for aperiodic sounds, the carrier r is below 0.3.</p>
+<p>For accepted validation trials, the 0.1th / 1st percentiles of envelope r are 0.62 / 0.88. For rejected trials the median is 0.06 and the max 0.38. Note that <code>FlexStimRecording.onset_time_on_sync</code> for a NaN latency returns the trigger time (via <code>np.nansum</code>). This is pre-existing behaviour, so callers should check <code>latency</code>.</p>
+<h2>4. Validation results</h2>
+<p>Full table: <code>tables/validation_summary.csv</code>. The rows below separate the effects of the estimator and of the clock.</p>
+<table>
+<thead>
+<tr>
+<th>Stimulus</th>
+<th>Method</th>
+<th style="text-align: right;">median error (µs)</th>
+<th style="text-align: right;">p50 |e|</th>
+<th style="text-align: right;">p95 |e|</th>
+<th style="text-align: right;">p99 |e|</th>
+<th style="text-align: right;">max |e|</th>
+<th style="text-align: right;">&gt; 1 ms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task AM noise</td>
+<td>legacy</td>
+<td style="text-align: right;">+28.8</td>
+<td style="text-align: right;">34.6</td>
+<td style="text-align: right;">108.8</td>
+<td style="text-align: right;">90,224</td>
+<td style="text-align: right;">154,860</td>
+<td style="text-align: right;">2.2 %</td>
+</tr>
+<tr>
+<td></td>
+<td>legacy, <code>use_envelope</code></td>
+<td style="text-align: right;">+38.9</td>
+<td style="text-align: right;">42.0</td>
+<td style="text-align: right;">122.5</td>
+<td style="text-align: right;">94,511</td>
+<td style="text-align: right;">158,020</td>
+<td style="text-align: right;">2.2 %</td>
+</tr>
+<tr>
+<td></td>
+<td>legacy + barcode clock</td>
+<td style="text-align: right;">+29.2</td>
+<td style="text-align: right;">29.7</td>
+<td style="text-align: right;">86.9</td>
+<td style="text-align: right;">90,190</td>
+<td style="text-align: right;">154,889</td>
+<td style="text-align: right;">2.2 %</td>
+</tr>
+<tr>
+<td></td>
+<td>new, linear clock</td>
+<td style="text-align: right;">−2.4</td>
+<td style="text-align: right;">23.7</td>
+<td style="text-align: right;">79.6</td>
+<td style="text-align: right;">90.1</td>
+<td style="text-align: right;">102.0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>new + barcode clock</strong></td>
+<td style="text-align: right;"><strong>+1.1</strong></td>
+<td style="text-align: right;"><strong>3.7</strong></td>
+<td style="text-align: right;"><strong>10.4</strong></td>
+<td style="text-align: right;"><strong>13.6</strong></td>
+<td style="text-align: right;"><strong>18.4</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+<tr>
+<td>RF AM noise</td>
+<td>legacy</td>
+<td style="text-align: right;">+25.6</td>
+<td style="text-align: right;">25.7</td>
+<td style="text-align: right;">58.7</td>
+<td style="text-align: right;">72.1</td>
+<td style="text-align: right;">95.3</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td></td>
+<td>new, linear clock</td>
+<td style="text-align: right;">−4.4</td>
+<td style="text-align: right;">9.8</td>
+<td style="text-align: right;">30.7</td>
+<td style="text-align: right;">50.0</td>
+<td style="text-align: right;">64.0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>new + barcode clock</strong></td>
+<td style="text-align: right;"><strong>−2.5</strong></td>
+<td style="text-align: right;"><strong>3.7</strong></td>
+<td style="text-align: right;"><strong>9.8</strong></td>
+<td style="text-align: right;"><strong>11.9</strong></td>
+<td style="text-align: right;"><strong>16.3</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+<tr>
+<td>RF tones</td>
+<td>legacy</td>
+<td style="text-align: right;">−570</td>
+<td style="text-align: right;">11,182</td>
+<td style="text-align: right;">99,681</td>
+<td style="text-align: right;">102,224</td>
+<td style="text-align: right;">104,731</td>
+<td style="text-align: right;">85.2 %</td>
+</tr>
+<tr>
+<td></td>
+<td>legacy, <code>use_envelope</code></td>
+<td style="text-align: right;">+42.6</td>
+<td style="text-align: right;">258.9</td>
+<td style="text-align: right;">2,279</td>
+<td style="text-align: right;">10,350</td>
+<td style="text-align: right;">13,298</td>
+<td style="text-align: right;">11.9 %</td>
+</tr>
+<tr>
+<td></td>
+<td>new, linear clock</td>
+<td style="text-align: right;">−4.5</td>
+<td style="text-align: right;">35.0</td>
+<td style="text-align: right;">126.1</td>
+<td style="text-align: right;">277.4</td>
+<td style="text-align: right;">857.3</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>new + barcode clock</strong></td>
+<td style="text-align: right;"><strong>−2.5</strong></td>
+<td style="text-align: right;"><strong>35.2</strong></td>
+<td style="text-align: right;"><strong>123.6</strong></td>
+<td style="text-align: right;"><strong>278.6</strong></td>
+<td style="text-align: right;"><strong>867.1</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Noise.</strong> The estimator removes the legacy bias of +20–30 µs. The barcode clock removes the slow drift: p95 falls from 80 to 10 µs (Figs. 6–7). What remains (3.7 µs median) is close to the 10 µs quantization of the sync ground truth.</li>
+<li><strong>Tones.</strong> This is a different problem. The estimator fix takes errors from about 100 ms to about 0.1 ms, and the clock makes little difference at that scale. Accuracy is limited to roughly one carrier cycle (Fig. 5).<ul>
+<li>The worst frequencies are 6, 9 and 15 kHz (p95 225–286 µs), i.e. simple rational fractions of the NI-DAQ rate (1/5, 3/10, 1/2), where the aliased envelope carries the least sub-sample information. 12 kHz (2/5) was also poor before the fine phase search.</li>
+<li>Even on synthetic, noise-free data the envelope surface for a 7 kHz tone has near-ties of about 10⁻⁵ at sub-sample offsets, so this is a property of the measurement and not only of model mismatch.</li>
+</ul>
+</li>
+</ul>
+<p><img alt="Fig. 4" src="figures/fig4_error_hist.png" /></p>
+<p><em>Fig. 4. Distribution of |onset error| in validation sessions, log–log. The dotted line is 1 ms. The legacy task-noise tail above 1 ms comes from the file with no speaker signal (§4.3).</em></p>
+<p><img alt="Fig. 5" src="figures/fig5_tone_freq.png" /></p>
+<p><em>Fig. 5. Tone onset error by frequency. The dotted line is one carrier period.</em></p>
+<p><img alt="Fig. 6" src="figures/fig6_clock.png" /></p>
+<p><em>Fig. 6. AM-noise onset error over session time for 4 sessions, with the npc_ephys linear clock and with the barcode-smoothed clock. The gap is the time between RF mapping and the task.</em></p>
+<p><img alt="Fig. 7" src="figures/fig7_session_bias.png" /></p>
+<p><em>Fig. 7. Per-session median error for AM noise. The barcode-clock points include the leave-one-session-out offset correction.</em></p>
+<h3>4.1 Per-frequency table (tones, validation)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">kHz</th>
+<th style="text-align: right;">legacy p95</th>
+<th style="text-align: right;">legacy &gt; 1 ms</th>
+<th style="text-align: right;">legacy <code>use_envelope</code> p95</th>
+<th style="text-align: right;">new median</th>
+<th style="text-align: right;">new p95</th>
+<th style="text-align: right;">new max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2.76 ms</td>
+<td style="text-align: right;">57 %</td>
+<td style="text-align: right;">349 µs</td>
+<td style="text-align: right;">23 µs</td>
+<td style="text-align: right;">102 µs</td>
+<td style="text-align: right;">151 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">11.6 ms</td>
+<td style="text-align: right;">88 %</td>
+<td style="text-align: right;">240 µs</td>
+<td style="text-align: right;">24 µs</td>
+<td style="text-align: right;">83 µs</td>
+<td style="text-align: right;">124 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">12.5 ms</td>
+<td style="text-align: right;">90 %</td>
+<td style="text-align: right;">455 µs</td>
+<td style="text-align: right;">70 µs</td>
+<td style="text-align: right;">225 µs</td>
+<td style="text-align: right;">335 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1.58 ms</td>
+<td style="text-align: right;">34 %</td>
+<td style="text-align: right;">468 µs</td>
+<td style="text-align: right;">57 µs</td>
+<td style="text-align: right;">77 µs</td>
+<td style="text-align: right;">96 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">3.09 ms</td>
+<td style="text-align: right;">65 %</td>
+<td style="text-align: right;">291 µs</td>
+<td style="text-align: right;">5 µs</td>
+<td style="text-align: right;">61 µs</td>
+<td style="text-align: right;">74 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">9.45 ms</td>
+<td style="text-align: right;">80 %</td>
+<td style="text-align: right;">615 µs</td>
+<td style="text-align: right;">66 µs</td>
+<td style="text-align: right;">286 µs</td>
+<td style="text-align: right;">681 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">14.3 ms</td>
+<td style="text-align: right;">94 %</td>
+<td style="text-align: right;">945 µs</td>
+<td style="text-align: right;">7 µs</td>
+<td style="text-align: right;">102 µs</td>
+<td style="text-align: right;">144 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">27.5 ms</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;">597 µs</td>
+<td style="text-align: right;">37 µs</td>
+<td style="text-align: right;">77 µs</td>
+<td style="text-align: right;">94 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">43.7 ms</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;">1.35 ms</td>
+<td style="text-align: right;">41 µs</td>
+<td style="text-align: right;">89 µs</td>
+<td style="text-align: right;">134 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">59.1 ms</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;">612 µs</td>
+<td style="text-align: right;">37 µs</td>
+<td style="text-align: right;">54 µs</td>
+<td style="text-align: right;">91 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">69.6 ms</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;">1.91 ms</td>
+<td style="text-align: right;">41 µs</td>
+<td style="text-align: right;">59 µs</td>
+<td style="text-align: right;">115 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">85.8 ms</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;">11.5 ms</td>
+<td style="text-align: right;">65 µs</td>
+<td style="text-align: right;">273 µs</td>
+<td style="text-align: right;">867 µs</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">103.4 ms</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;">599 µs</td>
+<td style="text-align: right;">5 µs</td>
+<td style="text-align: right;">64 µs</td>
+<td style="text-align: right;">113 µs</td>
+</tr>
+</tbody>
+</table>
+<p>(768 trials per frequency.)</p>
+<h3>4.2 End-to-end check through the public API</h3>
+<p><code>get_stim_latencies_from_nidaq_recording(..., waveform_type='sound')</code> was run on S3 data against <code>get_stim_latencies_from_sync</code> for two sessions. This exercises segment reading, the barcode clock built from the sync file, calibration, alignment and the constant offset. Results are in <code>experiments/aud_xcorr/results/e2e_trials_final.csv</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Stim</th>
+<th>Stimulus</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">NaN</th>
+<th style="text-align: right;">New: median</th>
+<th style="text-align: right;">New: p95 |e|</th>
+<th style="text-align: right;">New: max</th>
+<th style="text-align: right;">Legacy: median</th>
+<th style="text-align: right;">Legacy: p95 |e|</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>668755 2023-08-31</td>
+<td>task</td>
+<td>AM noise</td>
+<td style="text-align: right;">233</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">−3.0 µs</td>
+<td style="text-align: right;">9.7 µs</td>
+<td style="text-align: right;">13.2 µs</td>
+<td style="text-align: right;">+45.4 µs</td>
+<td style="text-align: right;">82.0 µs</td>
+</tr>
+<tr>
+<td></td>
+<td>RF</td>
+<td>AM noise</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">−4.6 µs</td>
+<td style="text-align: right;">11.1 µs</td>
+<td style="text-align: right;">13.7 µs</td>
+<td style="text-align: right;">+19.6 µs</td>
+<td style="text-align: right;">45.6 µs</td>
+</tr>
+<tr>
+<td></td>
+<td>RF</td>
+<td>tone</td>
+<td style="text-align: right;">312</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">−4.2 µs</td>
+<td style="text-align: right;">81.3 µs</td>
+<td style="text-align: right;">178 µs</td>
+<td style="text-align: right;">−1.24 ms</td>
+<td style="text-align: right;">102 ms</td>
+</tr>
+<tr>
+<td>676909 2023-12-12</td>
+<td>task</td>
+<td>AM noise</td>
+<td style="text-align: right;">232</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">+0.8 µs</td>
+<td style="text-align: right;">6.7 µs</td>
+<td style="text-align: right;">10.9 µs</td>
+<td style="text-align: right;">+95.4 µs</td>
+<td style="text-align: right;">131 µs</td>
+</tr>
+<tr>
+<td></td>
+<td>RF</td>
+<td>AM noise</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">−4.1 µs</td>
+<td style="text-align: right;">10.7 µs</td>
+<td style="text-align: right;">13.2 µs</td>
+<td style="text-align: right;">+52.0 µs</td>
+<td style="text-align: right;">76.2 µs</td>
+</tr>
+<tr>
+<td></td>
+<td>RF</td>
+<td>tone</td>
+<td style="text-align: right;">312</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">−4.2 µs</td>
+<td style="text-align: right;">115 µs</td>
+<td style="text-align: right;">173 µs</td>
+<td style="text-align: right;">+28.8 µs</td>
+<td style="text-align: right;">99.8 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Wall time per stim file, including S3 reads: 74–178 s for the new method and 101–149 s for legacy. Threaded segment reads offset the extra computation.</p>
+<h3>4.3 Rejected trials</h3>
+<p>All 165 rejected validation trials belong to one file: 686176 2023-12-06, DR task. That session's task spans two NI-DAQ recordings, and the one used (recording1) has no matching speaker signal during the task (envelope r ≈ 0.05). Legacy returned times more than 1 ms wrong for 98.8 % of these trials. Outside that file no validation trial was rejected, and no accepted trial is more than 1 ms off.</p>
+<p>In older sessions, 2 trials were rejected (666986 2023-08-14, RF). The recording there contains a different, louder sound overlapping the expected one.</p>
+<h2>5. Older sessions (no sync sound line)</h2>
+<p><img alt="Fig. 8" src="figures/fig8_old_sessions.png" /></p>
+<p><em>Fig. 8. Left: |legacy − new| onset difference in the 55 older sessions, by sound mode and stimulus. Right: sound latency re. trigger (new method) by sound mode.</em></p>
+<table>
+<thead>
+<tr>
+<th>Sound mode</th>
+<th>Stimulus</th>
+<th style="text-align: right;">Trials</th>
+<th style="text-align: right;">p50 |legacy − new|</th>
+<th style="text-align: right;">p95</th>
+<th style="text-align: right;">&gt; 1 ms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>daq</code></td>
+<td>AM noise</td>
+<td style="text-align: right;">4,874</td>
+<td style="text-align: right;">25 µs</td>
+<td style="text-align: right;">77 µs</td>
+<td style="text-align: right;">0 %</td>
+</tr>
+<tr>
+<td><code>daq</code></td>
+<td>tone</td>
+<td style="text-align: right;">6,614</td>
+<td style="text-align: right;">14.4 ms</td>
+<td style="text-align: right;">169 ms</td>
+<td style="text-align: right;"><strong>87.6 %</strong></td>
+</tr>
+<tr>
+<td><code>internal</code></td>
+<td>AM noise</td>
+<td style="text-align: right;">7,854</td>
+<td style="text-align: right;">35 µs</td>
+<td style="text-align: right;">70 µs</td>
+<td style="text-align: right;">0 %</td>
+</tr>
+<tr>
+<td><code>internal</code></td>
+<td>tone</td>
+<td style="text-align: right;">10,601</td>
+<td style="text-align: right;">2.1 ms</td>
+<td style="text-align: right;">14.2 ms</td>
+<td style="text-align: right;"><strong>68.5 %</strong></td>
+</tr>
+<tr>
+<td><code>sound card</code></td>
+<td>AM noise</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">30 µs</td>
+<td style="text-align: right;">51 µs</td>
+<td style="text-align: right;">0 %</td>
+</tr>
+<tr>
+<td><code>sound card</code></td>
+<td>tone</td>
+<td style="text-align: right;">962</td>
+<td style="text-align: right;">5.4 ms</td>
+<td style="text-align: right;">15.0 ms</td>
+<td style="text-align: right;"><strong>81.4 %</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Latency from trigger to sound (1st / 50th / 99th percentile):</p>
+<ul>
+<li><code>daq</code>: 7.2 / 13.5 / 37.8 ms. The modes about 16.7 ms apart look like one-frame delays.</li>
+<li><code>internal</code>: 14.7 / 61.1 / 104.8 ms.</li>
+<li><code>sound card</code>: 53.6 / 62.4 / 70.2 ms.</li>
+</ul>
+<p>The new default search window (−20 to +250 ms) covers these. The legacy ±150 ms also covers them, so latency range does not explain the legacy errors.</p>
+<p><strong>Implication.</strong> Any analysis aligned to auditory onsets in pre-2023-08-31 sessions should be regenerated where tones were used, i.e. RF-mapping tone responses and tone-based task sessions. Noise-aligned data shift by only tens of µs.</p>
+<h2>6. Limitations and open questions</h2>
+<ul>
+<li>
+<p><strong>Validation covers <code>daq</code> mode on rig NP3 only.</strong> For <code>internal</code> and <code>sound card</code> sessions, the evidence is indirect:</p>
+<ul>
+<li>calibration finds a band-limited model at about +10 ppm with r = 0.99–1.00, a better fit than in <code>daq</code> mode;</li>
+<li>noise agrees with legacy to tens of µs;</li>
+<li>the tone failures match the validated legacy failure.</li>
+</ul>
+<p>Absolute accuracy there is <strong>not verified</strong>. Sound-card output filters add their own delay, so what is measured is when the signal reaches the NI-DAQ, which is the physically relevant time.</p>
+</li>
+<li>
+<p><strong>The +19.7 µs offset is assumed to transfer to older sessions.</strong> The NI-DAQ model (PXI-6133) and rig are the same, but OpenEphys versions may differ. If it doesn't transfer, the error is at most about 20 µs.</p>
+</li>
+<li>
+<p><strong>Tone precision is about one carrier cycle</strong> (p95 ≤ 0.29 ms, max 0.87 ms). Better would need a per-frequency phase calibration of the analog chain.</p>
+</li>
+<li>
+<p><strong>Runtime.</strong> Computation per session, single process on cached data: about 1.7 min for a <code>daq</code> session (task + RF) and about 7 min for an <code>internal</code> session (band-limited model, tones up to 1 s). Legacy takes seconds on cached data. Through S3 the totals are similar (§4.2), because legacy reads segments serially. Most of the compute is calibration (12 trials × about 85 candidate models) and the 128-phase tone search.</p>
+</li>
+<li>
+<p><strong>Multiple NI-DAQ recordings</strong> in one session (3 of 90) need the caller to pass the recording that covers the stimulus.</p>
+</li>
+<li>
+<p><strong>Clock wander also affects opto timing</strong> derived from NI-DAQ data. <code>get_nidaq_clock</code> could be reused there; this was not done or tested.</p>
+</li>
+<li>
+<p><strong><code>npc_ephys.get_ephys_timing_on_sync</code></strong> fits through the first and last barcodes only. Fixing it upstream would improve every NI-DAQ- and probe-derived time, but probe clocks were not evaluated.</p>
+</li>
+</ul>
+<h2>7. Reproduction</h2>
+<p>Data cache (about 6.4 GB, not committed), evaluation and figures:</p>
+<pre><code class="language-bash">cd experiments/aud_xcorr
+python discover.py                  # list sessions -&gt; sessions.json
+python extract.py                   # cache NI-DAQ segments, waveforms, sync GT (S3)
+python fetch_barcodes.py            # cache barcode pairs
+python check_baseline.py            # replica == library legacy xcorr
+python evaluate.py 12               # legacy methods (results/trials.csv)
+python evaluate_final.py 12         # shipped pipeline (results/final_trials.csv)
+python analyze.py                   # figures/tables -&gt; outputs/aud-onset-xcorr/
+python e2e_check.py 668755_2023-08-31 676909_2023-12-12   # public API on S3
+pytest tests                        # incl. tests/test_sound_alignment.py
+</code></pre>
+<p><code>_creds.py</code> resolves AWS credentials through boto3 and exports them, because aiobotocore cannot launch a <code>credential_process</code> under the Windows event loop.</p>
+<h2>Sources</h2>
+<ul>
+<li>DynamicRoutingTask <code>TaskControl.py</code> (sound output, AO channels, rig config): <a href="https://github.com/samgale/DynamicRoutingTask/blob/master/TaskControl.py">https://github.com/samgale/DynamicRoutingTask/blob/master/TaskControl.py</a></li>
+<li>DynamicRoutingTask <code>TaskUtils.makeSoundArray</code>: <a href="https://github.com/samgale/DynamicRoutingTask/blob/master/TaskUtils.py">https://github.com/samgale/DynamicRoutingTask/blob/master/TaskUtils.py</a></li>
+<li>npc_sync <code>FIRST_SOUND_ON_SYNC_DATE</code>, sync line 1: <code>npc_sync/sync.py</code> (installed v0.1.24)</li>
+<li>npc_ephys barcode alignment: <code>npc_ephys/openephys.py::get_ephys_timing_on_sync</code>, <code>npc_ephys/barcodes.py</code> (installed v0.1.1)</li>
+<li>Data: <code>s3://aind-ephys-data/ecephys_*</code> (behavior/, ecephys_clipped/, ecephys_compressed/)</li>
+<li>Artifacts: <code>outputs/aud-onset-xcorr/tables/*.csv</code>, <code>outputs/aud-onset-xcorr/numbers.json</code>, <code>experiments/aud_xcorr/results/</code></li>
+</ul></body></html>

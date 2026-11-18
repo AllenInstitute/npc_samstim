@@ -1,0 +1,1330 @@
+[
+ {
+  "session": "ecephys_620263_2022-07-26_14-08-55",
+  "stims": [
+   "DynamicRouting1_620263_20220726_141043.hdf5"
+  ],
+  "sync": "20220726T140855.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_620263_2022-07-26_14-08-55/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_620263_2022-07-27_13-56-52",
+  "stims": [
+   "DynamicRouting1_620263_20220727_135736.hdf5"
+  ],
+  "sync": "20220727T135652.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_620263_2022-07-27_13-56-52/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_620264_2022-08-02_15-39-59",
+  "stims": [
+   "DynamicRouting1_620264_20220802_154131.hdf5"
+  ],
+  "sync": "20220802T153959.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_620264_2022-08-02_15-39-59/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_626791_2022-08-15_00-00-00",
+  "stims": [
+   "DynamicRouting1_626791_20220815_112336.hdf5",
+   "RFMapping_626791_20220815_122507.hdf5"
+  ],
+  "sync": "20220815T112217.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_626791_2022-08-15_00-00-00/ecephys_clipped/Record Node 108/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 108"
+  ]
+ },
+ {
+  "session": "ecephys_626791_2022-08-16_00-00-00",
+  "stims": [
+   "DynamicRouting1_626791_20220816_124419.hdf5",
+   "RFMapping_626791_20220816_134828.hdf5"
+  ],
+  "sync": "20220816T124251.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_626791_2022-08-16_00-00-00/ecephys_clipped/Record Node 108/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 108"
+  ]
+ },
+ {
+  "session": "ecephys_626791_2022-08-17_00-00-00",
+  "stims": [
+   "DynamicRouting1_626791_20220817_132623.hdf5",
+   "RFMapping_626791_20220817_142818.hdf5"
+  ],
+  "sync": "20220817T132454.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_626791_2022-08-17_00-00-00/ecephys_clipped/Record Node 108/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 108"
+  ]
+ },
+ {
+  "session": "ecephys_628801_2022-09-19_13-47-54",
+  "stims": [
+   "DynamicRouting1_628801_20220919_135312.hdf5"
+  ],
+  "sync": "20220919T134754.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_628801_2022-09-19_13-47-54/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_628801_2022-09-20_13-21-19",
+  "stims": [
+   "DynamicRouting1_628801_20220920_132308.hdf5"
+  ],
+  "sync": "20220920T132119.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_628801_2022-09-20_13-21-19/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_636397_2022-09-26_12-47-50",
+  "stims": [
+   "DynamicRouting1_636397_20220926_130542.hdf5"
+  ],
+  "sync": "20220926T124750.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_636397_2022-09-26_12-47-50/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_636397_2022-09-27_11-36-50",
+  "stims": [
+   "DynamicRouting1_636397_20220927_115633.hdf5"
+  ],
+  "sync": "20220927T113650.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_636397_2022-09-27_11-36-50/ecephys_clipped/Record Node 101/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 101"
+  ]
+ },
+ {
+  "session": "ecephys_636766_2023-01-23_00-00-00",
+  "stims": [
+   "DynamicRouting1_636766_20230123_120618.hdf5",
+   "RFMapping_636766_20230123_115051.hdf5"
+  ],
+  "sync": "20230123T115021.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_636766_2023-01-23_00-00-00/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_636766_2023-01-24_00-00-00",
+  "stims": [
+   "DynamicRouting1_636766_20230124_121705.hdf5",
+   "RFMapping_636766_20230124_120043.hdf5"
+  ],
+  "sync": "20230124T115901.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_636766_2023-01-24_00-00-00/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_636766_2023-01-25_00-00-00",
+  "stims": [
+   "DynamicRouting1_636766_20230125_130602.hdf5",
+   "RFMapping_636766_20230125_124953.hdf5"
+  ],
+  "sync": "20230125T124818.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_636766_2023-01-25_00-00-00/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_636766_2023-01-26_00-00-00",
+  "stims": [
+   "DynamicRouting1_636766_20230126_144708.hdf5",
+   "RFMapping_636766_20230126_143141.hdf5"
+  ],
+  "sync": "20230126T143042.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_636766_2023-01-26_00-00-00/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_644547_2022-12-05_13-07-55",
+  "stims": [
+   "DynamicRouting1_644547_20221205_130832.hdf5",
+   "RFMapping_644547_20221205_141052.hdf5"
+  ],
+  "sync": "20221205T130755.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644547_2022-12-05_13-07-55/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110"
+  ]
+ },
+ {
+  "session": "ecephys_644547_2022-12-06_12-35-29",
+  "stims": [
+   "DynamicRouting1_644547_20221206_123644.hdf5"
+  ],
+  "sync": "20221206T123529.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644547_2022-12-06_12-35-29/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110"
+  ]
+ },
+ {
+  "session": "ecephys_644864_2023-01-30_00-00-00",
+  "stims": [
+   "DynamicRouting1_644864_20230130_165757.hdf5",
+   "RFMapping_644864_20230130_164021.hdf5"
+  ],
+  "sync": "20230130T163935.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644864_2023-01-30_00-00-00/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_644864_2023-01-31_15-27-43",
+  "stims": [
+   "DynamicRouting1_644864_20230131_154453.hdf5",
+   "RFMapping_644864_20230131_152901.hdf5"
+  ],
+  "sync": "20230131T152743.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644864_2023-01-31_15-27-43/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_644864_2023-02-01_00-00-00",
+  "stims": [
+   "DynamicRouting1_644864_20230201_124332.hdf5",
+   "RFMapping_644864_20230201_122752.hdf5"
+  ],
+  "sync": "20230201T122454.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644864_2023-02-01_00-00-00/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 112"
+  ]
+ },
+ {
+  "session": "ecephys_644864_2023-02-02_12-29-19",
+  "stims": [
+   "DynamicRouting1_644864_20230202_125416.hdf5"
+  ],
+  "sync": "20230202T122919.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644864_2023-02-02_12-29-19/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644866_2023-02-08_16-01-11",
+  "stims": [
+   "DynamicRouting1_644866_20230208_162337.hdf5",
+   "RFMapping_644866_20230208_160157.hdf5"
+  ],
+  "sync": "20230208T160111.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644866_2023-02-08_16-01-11/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644866_2023-02-09_15-47-03",
+  "stims": [
+   "DynamicRouting1_644866_20230209_160340.hdf5",
+   "RFMapping_644866_20230209_154754.hdf5"
+  ],
+  "sync": "20230209T154703.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644866_2023-02-09_15-47-03/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644866_2023-02-10_11-26-55",
+  "stims": [
+   "DynamicRouting1_644866_20230210_114544.hdf5",
+   "RFMapping_644866_20230210_112750.hdf5"
+  ],
+  "sync": "20230210T112655.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644866_2023-02-10_11-26-55/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644867_2023-02-20_12-21-16",
+  "stims": [
+   "DynamicRouting1_644867_20230220_123909.hdf5",
+   "RFMapping_644867_20230220_122346.hdf5"
+  ],
+  "sync": "20230220T122116.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644867_2023-02-20_12-21-16/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644867_2023-02-21_12-17-01",
+  "stims": [
+   "DynamicRouting1_644867_20230221_123514.hdf5",
+   "RFMapping_644867_20230221_121904.hdf5"
+  ],
+  "sync": "20230221T121701.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644867_2023-02-21_12-17-01/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644867_2023-02-22_11-48-43",
+  "stims": [
+   "DynamicRouting1_644867_20230222_120728.hdf5",
+   "RFMapping_644867_20230222_115011.hdf5"
+  ],
+  "sync": "20230222T114843.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644867_2023-02-22_11-48-43/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_644867_2023-02-23_12-14-29",
+  "stims": [
+   "DynamicRouting1_644867_20230223_123351.hdf5",
+   "RFMapping_644867_20230223_121745.hdf5"
+  ],
+  "sync": "20230223T121429.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_644867_2023-02-23_12-14-29/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_646318_2023-01-17_11-38-56",
+  "stims": [
+   "DynamicRouting1_646318_20230117_114054.hdf5"
+  ],
+  "sync": "20230117T113856.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_646318_2023-01-17_11-38-56/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110"
+  ]
+ },
+ {
+  "session": "ecephys_646318_2023-01-18_10-44-42",
+  "stims": [
+   "DynamicRouting1_646318_20230118_104617.hdf5"
+  ],
+  "sync": "20230118T104442.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_646318_2023-01-18_10-44-42/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110"
+  ]
+ },
+ {
+  "session": "ecephys_649943_2023-02-13_11-28-02",
+  "stims": [
+   "DynamicRouting1_649943_20230213_114903.hdf5",
+   "RFMapping_649943_20230213_113232.hdf5"
+  ],
+  "sync": "20230213T112802.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_649943_2023-02-13_11-28-02/ecephys_clipped/Record Node 103/experiment1/recording2"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_649943_2023-02-14_11-03-06",
+  "stims": [
+   "DynamicRouting1_649943_20230214_111951.hdf5",
+   "RFMapping_649943_20230214_110401.hdf5"
+  ],
+  "sync": "20230214T110306.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_649943_2023-02-14_11-03-06/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_649943_2023-02-15_11-52-33",
+  "stims": [
+   "DynamicRouting1_649943_20230215_121023.hdf5",
+   "RFMapping_649943_20230215_115354.hdf5"
+  ],
+  "sync": "20230215T115233.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_649943_2023-02-15_11-52-33/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_649943_2023-02-16_13-02-21",
+  "stims": [
+   "DynamicRouting1_649943_20230216_132002.hdf5",
+   "RFMapping_649943_20230216_130339.hdf5"
+  ],
+  "sync": "20230216T130221.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_649943_2023-02-16_13-02-21/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_649944_2023-02-27_11-18-46",
+  "stims": [
+   "DynamicRouting1_649944_20230227_113655.hdf5",
+   "RFMapping_649944_20230227_112116.hdf5"
+  ],
+  "sync": "20230227T111846.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_649944_2023-02-27_11-18-46/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_649944_2023-02-28_11-38-23",
+  "stims": [
+   "DynamicRouting1_649944_20230228_115713.hdf5",
+   "RFMapping_649944_20230228_114108.hdf5"
+  ],
+  "sync": "20230228T113823.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_649944_2023-02-28_11-38-23/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_660023_2023-08-08_07-58-13",
+  "stims": [
+   "DynamicRouting1_660023_20230808_134654.hdf5",
+   "RFMapping_660023_20230808_130134.hdf5"
+  ],
+  "sync": "20230808T075813.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_660023_2023-08-08_07-58-13/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_660023_2023-08-09_08-09-09",
+  "stims": [
+   "DynamicRouting1_660023_20230809_124613.hdf5",
+   "RFMapping_660023_20230809_120108.hdf5"
+  ],
+  "sync": "20230809T080909.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_660023_2023-08-09_08-09-09/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_662892_2023-08-21_12-43-45",
+  "stims": [
+   "DynamicRouting1_662892_20230821_132820.hdf5",
+   "RFMapping_662892_20230821_124434.hdf5"
+  ],
+  "sync": "20230821T124345.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_662892_2023-08-21_12-43-45/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_662892_2023-08-22_12-08-36",
+  "stims": [
+   "DynamicRouting1_662892_20230822_125029.hdf5",
+   "RFMapping_662892_20230822_120918.hdf5"
+  ],
+  "sync": "20230822T120836.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_662892_2023-08-22_12-08-36/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_662892_2023-08-23_14-02-12",
+  "stims": [
+   "DynamicRouting1_662892_20230823_144409.hdf5",
+   "RFMapping_662892_20230823_140307.hdf5"
+  ],
+  "sync": "20230823T140212.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_662892_2023-08-23_14-02-12/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_662892_2023-08-24_14-28-28",
+  "stims": [
+   "DynamicRouting1_662892_20230824_151042.hdf5",
+   "RFMapping_662892_20230824_142911.hdf5"
+  ],
+  "sync": "20230824T142828.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_662892_2023-08-24_14-28-28/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_662983_2023-05-15_14-33-33",
+  "stims": [
+   "DynamicRouting1_662983_20230515_143823.hdf5"
+  ],
+  "sync": "20230515T143333.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_662983_2023-05-15_14-33-33/ecephys_clipped/Record Node 110/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 110",
+   "Record Node 111"
+  ]
+ },
+ {
+  "session": "ecephys_662983_2023-05-16_12-33-22",
+  "stims": [
+   "DynamicRouting1_662983_20230516_125101.hdf5",
+   "RFMapping_662983_20230516_123512.hdf5"
+  ],
+  "sync": "20230516T123322.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_662983_2023-05-16_12-33-22/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_664851_2023-11-13_12-49-51",
+  "stims": [
+   "DynamicRouting1_664851_20231113_134144.hdf5",
+   "RFMapping_664851_20231113_125122.hdf5"
+  ],
+  "sync": "20231113T124951.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_664851_2023-11-13_12-49-51/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_664851_2023-11-14_12-44-33",
+  "stims": [
+   "DynamicRouting1_664851_20231114_132530.hdf5",
+   "RFMapping_664851_20231114_124513.hdf5"
+  ],
+  "sync": "20231114T124433.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_664851_2023-11-14_12-44-33/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_664851_2023-11-15_12-38-21",
+  "stims": [
+   "DynamicRouting1_664851_20231115_131807.hdf5",
+   "RFMapping_664851_20231115_123930.hdf5"
+  ],
+  "sync": "20231115T123821.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_664851_2023-11-15_12-38-21/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_664851_2023-11-16_12-54-53",
+  "stims": [
+   "DynamicRouting1_664851_20231116_133302.hdf5",
+   "RFMapping_664851_20231116_125533.hdf5"
+  ],
+  "sync": "20231116T125453.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_664851_2023-11-16_12-54-53/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_666986_2023-08-14_11-38-55",
+  "stims": [
+   "DynamicRouting1_666986_20230814_122840.hdf5",
+   "RFMapping_666986_20230814_113945.hdf5",
+   "RFMapping_666986_20230814_114721.hdf5",
+   "RFMapping_666986_20230814_115042.hdf5"
+  ],
+  "sync": "20230814T113855.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_666986_2023-08-14_11-38-55/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_666986_2023-08-15_08-13-00",
+  "stims": [
+   "DynamicRouting1_666986_20230815_123701.hdf5",
+   "RFMapping_666986_20230815_115656.hdf5"
+  ],
+  "sync": "20230815T081300.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_666986_2023-08-15_08-13-00/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_666986_2023-08-16_15-12-36",
+  "stims": [
+   "DynamicRouting1_666986_20230816_155324.hdf5",
+   "RFMapping_666986_20230816_151318.hdf5"
+  ],
+  "sync": "20230816T151236.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_666986_2023-08-16_15-12-36/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_666986_2023-08-17_14-18-36",
+  "stims": [
+   "DynamicRouting1_666986_20230817_150019.hdf5",
+   "RFMapping_666986_20230817_141919.hdf5"
+  ],
+  "sync": "20230817T141836.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_666986_2023-08-17_14-18-36/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_667252_2023-09-25_12-16-37",
+  "stims": [
+   "DynamicRouting1_667252_20230925_125850.hdf5",
+   "RFMapping_667252_20230925_121738.hdf5"
+  ],
+  "sync": "20230925T121637.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_667252_2023-09-25_12-16-37/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_667252_2023-09-26_11-29-49",
+  "stims": [
+   "DynamicRouting1_667252_20230926_121118.hdf5",
+   "RFMapping_667252_20230926_113042.hdf5"
+  ],
+  "sync": "20230926T112949.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_667252_2023-09-26_11-29-49/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_667252_2023-09-27_12-26-58",
+  "stims": [
+   "DynamicRouting1_667252_20230927_130943.hdf5",
+   "RFMapping_667252_20230927_122748.hdf5"
+  ],
+  "sync": "20230927T122658.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_667252_2023-09-27_12-26-58/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_667252_2023-09-28_15-00-38",
+  "stims": [
+   "DynamicRouting1_667252_20230928_154120.hdf5",
+   "RFMapping_667252_20230928_150117.hdf5"
+  ],
+  "sync": "20230928T150038.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_667252_2023-09-28_15-00-38/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_668755_2023-08-28_13-06-40",
+  "stims": [
+   "DynamicRouting1_668755_20230828_134632.hdf5",
+   "RFMapping_668755_20230828_130739.hdf5"
+  ],
+  "sync": "20230828T130640.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_668755_2023-08-28_13-06-40/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_668755_2023-08-29_13-11-16",
+  "stims": [
+   "DynamicRouting1_668755_20230829_135150.hdf5",
+   "RFMapping_668755_20230829_131218.hdf5"
+  ],
+  "sync": "20230829T131116.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_668755_2023-08-29_13-11-16/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_668755_2023-08-30_12-36-35",
+  "stims": [
+   "DynamicRouting1_668755_20230830_130853.hdf5",
+   "RFMapping_668755_20230830_123723.hdf5"
+  ],
+  "sync": "20230830T123635.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_668755_2023-08-30_12-36-35/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_668755_2023-08-31_12-33-31",
+  "stims": [
+   "DynamicRouting1_668755_20230831_131418.hdf5",
+   "RFMapping_668755_20230831_123426.hdf5"
+  ],
+  "sync": "20230831T123331.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_668755_2023-08-31_12-33-31/ecephys_clipped/Record Node 102/experiment2/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670180_2023-07-25_11-38-03",
+  "stims": [
+   "DynamicRouting1_670180_20230725_121417.hdf5",
+   "RFMapping_670180_20230725_113853.hdf5"
+  ],
+  "sync": "20230725T113803.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670180_2023-07-25_11-38-03/ecephys_clipped/Record Node 102/experiment1/recording1",
+   "aind-ephys-data/ecephys_670180_2023-07-25_11-38-03/ecephys_clipped/Record Node 102/experiment1/recording2"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670180_2023-07-26_11-22-58",
+  "stims": [
+   "DynamicRouting1_670180_20230726_115849.hdf5",
+   "RFMapping_670180_20230726_112341.hdf5"
+  ],
+  "sync": "20230726T112258.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670180_2023-07-26_11-22-58/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670180_2023-07-27_11-19-31",
+  "stims": [
+   "DynamicRouting1_670180_20230727_115713.hdf5",
+   "RFMapping_670180_20230727_112026.hdf5"
+  ],
+  "sync": "20230727T111931.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670180_2023-07-27_11-19-31/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670181_2023-07-18_12-45-30",
+  "stims": [
+   "DynamicRouting1_670181_20230720_150945.hdf5",
+   "RFMapping_670181_20230720_143526.hdf5"
+  ],
+  "sync": "20230718T124530.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670181_2023-07-18_12-45-30/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670248_2023-08-01_11-27-17",
+  "stims": [
+   "DynamicRouting1_670248_20230801_120304.hdf5",
+   "RFMapping_670248_20230801_112756.hdf5"
+  ],
+  "sync": "20230801T112717.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670248_2023-08-01_11-27-17/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670248_2023-08-02_11-30-53",
+  "stims": [
+   "RFMapping_670248_20230802_113132.hdf5"
+  ],
+  "sync": "20230802T113053.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670248_2023-08-02_11-30-53/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_670248_2023-08-03_12-04-15",
+  "stims": [
+   "DynamicRouting1_670248_20230803_123154.hdf5",
+   "RFMapping_670248_20230803_120605.hdf5"
+  ],
+  "sync": "20230803T120415.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_670248_2023-08-03_12-04-15/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_674562_2023-10-02_14-53-25",
+  "stims": [
+   "DynamicRouting1_674562_20231002_153018.hdf5",
+   "RFMapping_674562_20231002_145415.hdf5"
+  ],
+  "sync": "20231002T145325.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_674562_2023-10-02_14-53-25/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_674562_2023-10-03_15-09-37",
+  "stims": [
+   "DynamicRouting1_674562_20231003_155134.hdf5",
+   "RFMapping_674562_20231003_151033.hdf5"
+  ],
+  "sync": "20231003T150937.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_674562_2023-10-03_15-09-37/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_674562_2023-10-04_16-11-29",
+  "stims": [
+   "DynamicRouting1_674562_20231004_165226.hdf5",
+   "RFMapping_674562_20231004_161209.hdf5"
+  ],
+  "sync": "20231004T161129.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_674562_2023-10-04_16-11-29/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_674562_2023-10-05_12-13-56",
+  "stims": [
+   "DynamicRouting1_674562_20231005_125445.hdf5",
+   "RFMapping_674562_20231005_121447.hdf5"
+  ],
+  "sync": "20231005T121356.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_674562_2023-10-05_12-13-56/ecephys_clipped/Record Node 102/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 102",
+   "Record Node 103"
+  ]
+ },
+ {
+  "session": "ecephys_676909_2023-12-11_14-24-35",
+  "stims": [
+   "DynamicRouting1_676909_20231211_150646.hdf5",
+   "RFMapping_676909_20231211_142528.hdf5"
+  ],
+  "sync": "20231211T142435.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_676909_2023-12-11_14-24-35/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_676909_2023-12-12_13-04-37",
+  "stims": [
+   "DynamicRouting1_676909_20231212_134539.hdf5",
+   "RFMapping_676909_20231212_130517.hdf5"
+  ],
+  "sync": "20231212T130437.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_676909_2023-12-12_13-04-37/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_676909_2023-12-13_13-43-40",
+  "stims": [
+   "DynamicRouting1_676909_20231213_142049.hdf5",
+   "RFMapping_676909_20231213_134420.hdf5"
+  ],
+  "sync": "20231213T134340.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_676909_2023-12-13_13-43-40/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_676909_2023-12-14_12-43-11",
+  "stims": [
+   "DynamicRouting1_676909_20231214_132021.hdf5",
+   "RFMapping_676909_20231214_124350.hdf5"
+  ],
+  "sync": "20231214T124311.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_676909_2023-12-14_12-43-11/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_681532_2023-10-16_12-44-24",
+  "stims": [
+   "DynamicRouting1_681532_20231016_132352.hdf5",
+   "RFMapping_681532_20231016_124503.hdf5"
+  ],
+  "sync": "20231016T124424.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_681532_2023-10-16_12-44-24/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_681532_2023-10-17_14-01-23",
+  "stims": [
+   "DynamicRouting1_681532_20231017_143927.hdf5",
+   "RFMapping_681532_20231017_140221.hdf5"
+  ],
+  "sync": "20231017T140123.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_681532_2023-10-17_14-01-23/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_681532_2023-10-18_13-01-15",
+  "stims": [
+   "DynamicRouting1_681532_20231018_134334.hdf5",
+   "RFMapping_681532_20231018_130159.hdf5"
+  ],
+  "sync": "20231018T130115.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_681532_2023-10-18_13-01-15/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_681532_2023-10-19_14-33-42",
+  "stims": [
+   "DynamicRouting1_681532_20231019_152750.hdf5",
+   "RFMapping_681532_20231019_143432.hdf5"
+  ],
+  "sync": "20231019T143342.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_681532_2023-10-19_14-33-42/ecephys_clipped/Record Node 103/experiment1/recording1",
+   "aind-ephys-data/ecephys_681532_2023-10-19_14-33-42/ecephys_clipped/Record Node 103/experiment1/recording2"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686176_2023-12-04_13-06-37",
+  "stims": [
+   "DynamicRouting1_686176_20231204_135045.hdf5",
+   "RFMapping_686176_20231204_130725.hdf5"
+  ],
+  "sync": "20231204T130637.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686176_2023-12-04_13-06-37/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686176_2023-12-05_14-02-22",
+  "stims": [
+   "DynamicRouting1_686176_20231205_143834.hdf5",
+   "RFMapping_686176_20231205_140320.hdf5"
+  ],
+  "sync": "20231205T140222.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686176_2023-12-05_14-02-22/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686176_2023-12-06_13-03-34",
+  "stims": [
+   "DynamicRouting1_686176_20231206_135326.hdf5",
+   "RFMapping_686176_20231206_130627.hdf5"
+  ],
+  "sync": "20231206T130334.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686176_2023-12-06_13-03-34/ecephys_clipped/Record Node 103/experiment1/recording1",
+   "aind-ephys-data/ecephys_686176_2023-12-06_13-03-34/ecephys_clipped/Record Node 103/experiment1/recording2"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686176_2023-12-07_13-06-44",
+  "stims": [
+   "DynamicRouting1_686176_20231207_134240.hdf5",
+   "RFMapping_686176_20231207_130725.hdf5"
+  ],
+  "sync": "20231207T130644.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686176_2023-12-07_13-06-44/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686740_2023-10-23_14-11-05",
+  "stims": [
+   "DynamicRouting1_686740_20231023_150323.hdf5",
+   "RFMapping_686740_20231023_141158.hdf5"
+  ],
+  "sync": "20231023T141105.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686740_2023-10-23_14-11-05/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686740_2023-10-24_12-46-24",
+  "stims": [
+   "DynamicRouting1_686740_20231024_133358.hdf5",
+   "RFMapping_686740_20231024_124703.hdf5"
+  ],
+  "sync": "20231024T124624.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686740_2023-10-24_12-46-24/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686740_2023-10-25_12-54-49",
+  "stims": [
+   "DynamicRouting1_686740_20231025_133647.hdf5",
+   "RFMapping_686740_20231025_125527.hdf5"
+  ],
+  "sync": "20231025T125449.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686740_2023-10-25_12-54-49/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_686740_2023-10-26_12-29-08",
+  "stims": [
+   "DynamicRouting1_686740_20231026_130820.hdf5",
+   "RFMapping_686740_20231026_122951.hdf5"
+  ],
+  "sync": "20231026T122908.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_686740_2023-10-26_12-29-08/ecephys_clipped/Record Node 103/experiment2/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_690706_2023-11-27_15-10-08",
+  "stims": [
+   "DynamicRouting1_690706_20231127_155207.hdf5",
+   "RFMapping_690706_20231127_151053.hdf5"
+  ],
+  "sync": "20231127T151008.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_690706_2023-11-27_15-10-08/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_690706_2023-11-28_12-25-50",
+  "stims": [
+   "DynamicRouting1_690706_20231128_130806.hdf5",
+   "RFMapping_690706_20231128_122635.hdf5"
+  ],
+  "sync": "20231128T122550.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_690706_2023-11-28_12-25-50/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_690706_2023-11-29_12-50-23",
+  "stims": [
+   "DynamicRouting1_690706_20231129_132921.hdf5",
+   "RFMapping_690706_20231129_125148.hdf5"
+  ],
+  "sync": "20231129T125023.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_690706_2023-11-29_12-50-23/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ },
+ {
+  "session": "ecephys_690706_2023-11-30_12-37-41",
+  "stims": [
+   "DynamicRouting1_690706_20231130_131725.hdf5",
+   "RFMapping_690706_20231130_123903.hdf5"
+  ],
+  "sync": "20231130T123741.h5",
+  "rec_dirs": [
+   "aind-ephys-data/ecephys_690706_2023-11-30_12-37-41/ecephys_clipped/Record Node 103/experiment1/recording1"
+  ],
+  "nodes": [
+   "Record Node 103",
+   "Record Node 104"
+  ]
+ }
+]

@@ -1,0 +1,60 @@
+{
+ "n_validation_sessions": 33,
+ "n_validation_files": 64,
+ "n_validation_trials": 21069,
+ "validation_date_range": [
+  "2023-08-31",
+  "2023-12-14"
+ ],
+ "n_old_sessions": 55,
+ "n_old_files": 96,
+ "n_old_trials": 31027,
+ "old_date_range": [
+  "2022-07-26",
+  "2023-08-30"
+ ],
+ "offset_all_sessions_us": 19.698923210853536,
+ "offset_session_median_range_us": [
+  14.518171497002186,
+  25.53165376184552
+ ],
+ "files_mostly_rejected": [
+  "ecephys_686176_2023-12-06_13-03-34 DynamicRouting1: 100% rejected"
+ ],
+ "rejected_trials_validation": 165,
+ "rejected_trials_validation_outside_bad_files": 0,
+ "rejected_trials_legacy_gt1ms_frac": 0.9878787878787879,
+ "accepted_gross_errors_gt1ms": 0,
+ "marker_rate_hz_median": 47990.28135981463,
+ "marker_rate_hz_range": [
+  47990.24117105219,
+  47990.321548571614
+ ],
+ "old_rejected": 2,
+ "old_rejected_by_file": {
+  "ecephys_666986_2023-08-14_11-38-55 RFMapping": 2
+ },
+ "old_latency_ms_by_mode": {
+  "daq": [
+   7.206867185122974,
+   13.493455750698047,
+   37.812968066104986
+  ],
+  "internal": [
+   14.703087356062952,
+   61.12099813253735,
+   104.83593730381698
+  ],
+  "sound card": [
+   53.55025384152668,
+   62.43623365236317,
+   70.23299069604661
+  ]
+ },
+ "affected_old_files_with_tones": 63,
+ "sec_per_trial_by_kind": {
+  "AM noise": 0.4175961017608642,
+  "tone": 0.4525556564331054
+ },
+ "calibration_sec_median": 76.5503066778183
+}

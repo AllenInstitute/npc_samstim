@@ -22,6 +22,8 @@ import scipy.signal
 import tqdm
 import zarr
 
+from npc_samstim import sound_alignment
+
 logger = logging.getLogger(__name__)
 
 
@@ -702,7 +704,252 @@ def _xcorr(v, w, t) -> tuple[float, float]:
     return t[np.argmax(c)], np.max(c)
 
 
+NIDAQ_SOUND_ONSET_CORRECTION_SEC: float = -19.7e-6
+"""Constant added to sound onsets found in the PXI NI-DAQ speaker recording.
+
+Calibrated against the sync-line "sound running" marker (which marks the first
+sample of the analog-output buffer) in 33 sessions recorded 2023-08-31 to
+2023-12-14 (rig NP3, PXI-6133): with the barcode-smoothed clock
+(`get_nidaq_clock`), the median onset error of AM-noise trials was +19.7 us,
+with per-session medians 14.5-25.5 us. Most likely the relative timing of OpenEphys
+NI-DAQ TTL event stamps (used for barcodes) and analog samples (about half a
+30 kHz sample), plus a few us of analog delay. See `experiments/aud_xcorr`."""
+
+
 def xcorr(
+    nidaq_data: npt.NDArray[np.int16],
+    nidaq_timing: npc_ephys.EphysTimingInfo,
+    nidaq_channel: int,
+    presentations: Iterable[StimPresentation | None],
+    use_envelope: bool = False,
+    padding_sec: float = 0.15,
+    legacy: bool = False,
+    **kwargs,
+) -> tuple[StimRecording | None, ...]:
+    """Find stimulus onsets in an analog NI-DAQ recording of the stimulus signal.
+
+    - sound: model-based two-stage alignment (`align_sound`), unless `legacy=True`
+    - opto: raw cross-correlation of the command waveform (`xcorr_legacy`)
+
+    Extra kwargs are passed to `align_sound` (sound) or `xcorr_legacy` (opto).
+    """
+    presentations = tuple(presentations)
+    modality = next(p for p in presentations if p is not None).waveform.modality
+    if modality is WaveformModality.SOUND and not legacy:
+        if use_envelope:
+            logger.debug("`use_envelope` only applies to `xcorr_legacy`: ignored")
+        return align_sound(
+            nidaq_data=nidaq_data,
+            nidaq_timing=nidaq_timing,
+            nidaq_channel=nidaq_channel,
+            presentations=presentations,
+            **kwargs,
+        )
+    kwargs.pop("clock", None)
+    return xcorr_legacy(
+        nidaq_data,
+        nidaq_timing,
+        nidaq_channel,
+        presentations,
+        use_envelope=use_envelope,
+        padding_sec=padding_sec,
+        **kwargs,
+    )
+
+
+def get_nidaq_clock(
+    sync: npc_sync.SyncPathOrDataset,
+    nidaq_device: npc_ephys.EphysTimingInfoOnPXI,
+    smoothing_window: int = 9,
+) -> sound_alignment.SampleClock:
+    """NI-DAQ sample index -> sync time, from all matched barcodes (see
+    `sound_alignment.SampleClock.from_barcodes`)."""
+    sync = npc_sync.get_sync_data(sync)
+    sync_times, sync_ids = npc_ephys.barcodes.extract_barcodes_from_times(
+        on_times=sync.get_rising_edges("barcode_ephys", units="seconds"),
+        off_times=sync.get_falling_edges("barcode_ephys", units="seconds"),
+        total_time_on_line=sync.total_seconds,
+    )
+    device = nidaq_device.device
+    rate = nidaq_device.sampling_rate  # nominal
+    dev_times, dev_ids = npc_ephys.barcodes.extract_barcodes_from_times(
+        on_times=device.ttl_sample_numbers[device.ttl_states > 0] / rate,
+        off_times=device.ttl_sample_numbers[device.ttl_states < 0] / rate,
+        total_time_on_line=device.ttl_sample_numbers[-1] / rate,
+    )
+    sync_ids, sync_times = np.asarray(sync_ids), np.asarray(sync_times)
+    dev_ids, dev_times = np.asarray(dev_ids), np.asarray(dev_times)
+    uniq_sync = {
+        i: t for i, t in zip(sync_ids, sync_times) if np.sum(sync_ids == i) == 1
+    }
+    uniq_dev = {i: t for i, t in zip(dev_ids, dev_times) if np.sum(dev_ids == i) == 1}
+    common = sorted(set(uniq_sync) & set(uniq_dev), key=lambda i: uniq_dev[i])
+    if len(common) < 2:
+        raise ValueError(
+            f"Fewer than two matched barcodes between sync and {device.name}"
+        )
+    return sound_alignment.SampleClock.from_barcodes(
+        sample_numbers=[uniq_dev[i] * rate for i in common],
+        sync_times=[uniq_sync[i] for i in common],
+        smoothing_window=smoothing_window,
+    )
+
+
+def align_sound(
+    nidaq_data: npt.NDArray[np.int16],
+    nidaq_timing: npc_ephys.EphysTimingInfo,
+    nidaq_channel: int,
+    presentations: Iterable[StimPresentation | None],
+    clock: sound_alignment.SampleClock | None = None,
+    search_window_sec: tuple[float, float] = (-0.02, 0.25),
+    playback_model: sound_alignment.PlaybackModel | None = None,
+    num_calibration_trials: int = 12,
+    min_envelope_correlation: float = 0.5,
+    min_carrier_correlation: float = 0.3,
+    onset_correction_sec: float = NIDAQ_SOUND_ONSET_CORRECTION_SEC,
+    max_workers: int | None = None,
+    **kwargs,
+) -> tuple[StimRecording | None, ...]:
+    """Sound onsets from the NI-DAQ recording of the speaker signal.
+
+    - `clock`: NI-DAQ sample -> sync time; default is the linear `nidaq_timing`
+      (`get_stim_latencies_from_nidaq_recording` passes the barcode-smoothed
+      `get_nidaq_clock`)
+    - `search_window_sec`: onset search range relative to each trigger time
+    - `playback_model`: if None, calibrated from `num_calibration_trials` trials
+    - trials whose envelope correlation (any sound) or carrier correlation
+      (aperiodic sounds only) with the modelled waveform is below
+      `min_envelope_correlation` / `min_carrier_correlation` get latency NaN
+      (`NullRecording`), e.g. when the speaker signal is missing or a different
+      sound was recorded
+    - extra kwargs are passed to `sound_alignment.align_sound_waveform`
+    """
+    presentations = tuple(presentations)
+    if clock is None:
+        clock = sound_alignment.SampleClock.linear(
+            nidaq_timing.start_time, nidaq_timing.sampling_rate
+        )
+    margin = 0.01  # sec, either side of the search window + waveform
+    idx = [i for i, p in enumerate(presentations) if p is not None]
+
+    def read(i: int) -> tuple[int, npt.NDArray[np.float64] | None]:
+        p = presentations[i]
+        assert p is not None
+        t = p.trigger_time_on_sync
+        a = int(np.floor(clock.time_to_sample(t + search_window_sec[0] - margin)))
+        b = int(
+            np.ceil(
+                clock.time_to_sample(t + search_window_sec[1] + p.duration + margin)
+            )
+        )
+        if a < 0 or b > nidaq_data.shape[0]:
+            return a, None
+        samples = np.asarray(nidaq_data[a:b, nidaq_channel], dtype=np.float64)
+        return a, samples if samples.any() else None
+
+    segments: dict[int, tuple[int, npt.NDArray[np.float64] | None]] = {}
+    if isinstance(nidaq_data, zarr.Array):
+        with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
+            for i, segment in zip(idx, executor.map(read, idx)):
+                segments[i] = segment
+    else:
+        segments = {i: read(i) for i in idx}
+
+    def local_timing(i: int) -> tuple[float, float]:
+        a, samples = segments[i]
+        assert samples is not None
+        return clock.local_linear(a, len(samples))
+
+    recordings: list[StimRecording | None] = [None] * len(presentations)
+    usable = []
+    for i in idx:
+        if segments[i][1] is None:
+            logger.warning(f"No sound recording for trial {i} - setting latency=np.nan")
+            recordings[i] = NullRecording(presentation=presentations[i], latency=np.nan)
+        else:
+            usable.append(i)
+    if not usable:
+        return tuple(recordings)
+
+    def p_(i: int) -> StimPresentation:
+        p = presentations[i]
+        assert p is not None
+        return p
+
+    nominal = float(p_(usable[0]).waveform.sampling_rate)
+    if playback_model is None:
+        cal = [
+            usable[j]
+            for j in np.linspace(
+                0, len(usable) - 1, min(num_calibration_trials, len(usable))
+            ).astype(int)
+        ]
+        timing = [local_timing(i) for i in cal]
+        playback_model = sound_alignment.calibrate_playback_model(
+            recordings=[segments[i][1] for i in cal],  # type: ignore[misc]
+            recording_t0s=[t0 for t0, _ in timing],
+            recording_rate=float(np.median([sr for _, sr in timing])),
+            waveforms=[p_(i).waveform.samples for i in cal],
+            nominal_rate=nominal,
+            search_windows=[
+                (
+                    p_(i).trigger_time_on_sync + search_window_sec[0],
+                    p_(i).trigger_time_on_sync + search_window_sec[1],
+                )
+                for i in cal
+            ],
+        )
+
+    quality: list[float] = []
+    for i in tqdm.tqdm(
+        usable, desc="aligning sound waveforms", unit="trial", ncols=80, ascii=False
+    ):
+        p = p_(i)
+        t0, sr = local_timing(i)
+        model = playback_model
+        if p.waveform.sampling_rate != nominal:
+            model = dataclasses.replace(
+                playback_model,
+                sampling_rate=playback_model.sampling_rate
+                * p.waveform.sampling_rate
+                / nominal,
+            )
+        result = sound_alignment.align_sound_waveform(
+            recording=segments[i][1],  # type: ignore[arg-type]
+            recording_t0=t0,
+            recording_rate=sr,
+            waveform=p.waveform.samples,
+            model=model,
+            search_start=p.trigger_time_on_sync + search_window_sec[0],
+            search_stop=p.trigger_time_on_sync + search_window_sec[1],
+            **kwargs,
+        )
+        quality.append(result.envelope_correlation)
+        if not np.isfinite(result.onset_time) or not (
+            result.envelope_correlation >= min_envelope_correlation
+            and (
+                result.periodic or result.carrier_correlation >= min_carrier_correlation
+            )
+        ):
+            logger.warning(
+                f"Sound alignment failed for trial {i} (envelope r="
+                f"{result.envelope_correlation:.3f}, carrier r={result.carrier_correlation:.3f}"
+                f") - setting latency=np.nan"
+            )
+            recordings[i] = NullRecording(presentation=p, latency=np.nan)
+            continue
+        recordings[i] = FlexStimRecording(
+            presentation=p,
+            onset_time_on_sync=result.onset_time + onset_correction_sec,
+        )
+    logger.info(
+        f"Sound alignment envelope correlation: min={np.nanmin(quality):.3f}, "
+        f"median={np.nanmedian(quality):.3f}, model={playback_model}"
+    )
+    return tuple(recordings)
+
+
+def xcorr_legacy(
     nidaq_data: npt.NDArray[np.int16],
     nidaq_timing: npc_ephys.EphysTimingInfo,
     nidaq_channel: int,
@@ -711,6 +958,11 @@ def xcorr(
     padding_sec: float = 0.15,
     **kwargs,
 ) -> tuple[StimRecording | None, ...]:
+    """Original method: raw (or local-max envelope) cross-correlation of the
+    ideal waveform, linearly interpolated to the NI-DAQ rate, at integer-sample
+    lags. Still used for opto. For sound it fails for pure tones (errors up to
+    ~100 ms): see `align_sound`."""
+    presentations = tuple(presentations)
     num_presentations = len(tuple(presentations))
     waveform_modality = next(
         p for p in presentations if p is not None
@@ -925,6 +1177,19 @@ def get_stim_latencies_from_nidaq_recording(
             trigger_time_on_sync=float(vsyncs[trigger_frames[idx]]),
         )
 
+    correlation_method_kwargs = dict(correlation_method_kwargs or {})
+    if (
+        correlation_method is xcorr
+        and "clock" not in correlation_method_kwargs
+        and "opto" not in waveform_type
+    ):
+        try:
+            correlation_method_kwargs["clock"] = get_nidaq_clock(sync, nidaq_device)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                f"Could not build barcode-smoothed NI-DAQ clock ({exc!r}): using linear timing"
+            )
+
     # run the correlation of presentations with nidaq data
     recordings = correlation_method(
         nidaq_data,
@@ -932,7 +1197,7 @@ def get_stim_latencies_from_nidaq_recording(
         nidaq_channel,
         presentations,
         use_envelope,
-        **(correlation_method_kwargs or {}),
+        **correlation_method_kwargs,
     )
 
     return recordings

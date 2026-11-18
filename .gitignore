@@ -166,3 +166,14 @@ cython_debug/
 .ruff_cache
 
 .sandbox.py
+# audio-onset alignment experiment: large local caches / per-trial outputs
+experiments/aud_xcorr/cache/
+experiments/aud_xcorr/results/*.csv
+!experiments/aud_xcorr/results/final_calibration.csv
+experiments/aud_xcorr/*.png
+experiments/aud_xcorr/prof.out
+experiments/aud_xcorr/p.out
+experiments/aud_xcorr/results/final_parts/
+experiments/aud_xcorr/results/*.png
+experiments/aud_xcorr/results/*_log.txt
+experiments/aud_xcorr/results/*.out
