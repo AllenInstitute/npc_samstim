@@ -7,8 +7,8 @@ import datetime
 import enum
 import functools
 import logging
-from collections.abc import Iterable
-from typing import Any, Callable, Literal, Protocol
+from collections.abc import Callable, Iterable
+from typing import Any, Literal, Protocol
 
 import DynamicRoutingTask.TaskUtils
 import npc_ephys
@@ -1220,7 +1220,7 @@ def get_stim_latencies_from_nidaq_recording(
             correlation_method_kwargs["clock"] = get_nidaq_clock(
                 sync, nidaq_device, nidaq_timing
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 f"Could not build barcode-smoothed NI-DAQ clock ({exc!r}): using linear timing"
             )
