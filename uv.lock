@@ -3015,7 +3015,7 @@ wheels = [
 
 [[package]]
 name = "npc-ephys"
-version = "0.1.51"
+version = "0.1.52"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "npc-io" },
@@ -3030,9 +3030,9 @@ dependencies = [
     { name = "zarr", version = "3.1.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "zarr", version = "3.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/78/26e6e9577ac4d1c131d10a20539d63cc1b63d1c806a56b2947d064b32c61/npc_ephys-0.1.51.tar.gz", hash = "sha256:33b585fca0ae3c5f3b0477455cc4c2bc1183867019675e13f252cc4dcf626643", size = 51504, upload-time = "2026-11-18T21:39:05.754Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/85/61832e46399f984091dfe97277afb170b8a65e2961d8ac68b086b64d7a70/npc_ephys-0.1.52.tar.gz", hash = "sha256:cc6bf954b63dd4b4933f22f896f6fff03ecfd1f43f53d2e6bd6a8d44c938e64d", size = 51509, upload-time = "2026-11-18T21:48:32.825Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/6b/317074092f1410102cf0719772b968a9b6ee7940ebe7ea4f0f6e0eb661be/npc_ephys-0.1.51-py3-none-any.whl", hash = "sha256:d7fbadd6d2d466eff2bc81f135cbda2276d52cbbe223a5ea7d45c8b2b3645d75", size = 46732, upload-time = "2026-11-18T21:39:04.68Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/c4/4a6865995916e7f051a576accf9061f3b379d5c870640d5d4fcc2cde74ec/npc_ephys-0.1.52-py3-none-any.whl", hash = "sha256:98d87ed34d52918ca1873fd7049c754491e79c9e71cc936051af14a2dacb379d", size = 46762, upload-time = "2026-11-18T21:48:31.867Z" },
 ]
 
 [[package]]
@@ -3125,7 +3125,7 @@ testing = [
 [package.metadata]
 requires-dist = [
     { name = "dynamicroutingtask", specifier = ">=0.1.91" },
-    { name = "npc-ephys", specifier = ">=0.1.51" },
+    { name = "npc-ephys", specifier = ">=0.1.52" },
     { name = "npc-stim", specifier = ">=0.1.25" },
     { name = "npc-sync", specifier = ">=0.3.2" },
     { name = "numba", specifier = ">=0.59.0" },
