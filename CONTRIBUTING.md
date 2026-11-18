@@ -30,10 +30,9 @@ python3 -m venv .venv
   source .venv/bin/scripts/activate
   ```
 
-4. Add [PDM](https://pdm.fming.dev) to manage the project's dependencies and run pre-build jobs:
+4. Install [uv](https://docs.astral.sh/uv/) to manage the project's dependencies and run development tasks:
 ```bash
-pip install pdm
-pdm install
+uv sync
 ```
 
 You now have an editable pip install of the project, with all dev dependencies.
@@ -42,15 +41,15 @@ The following should work:
 python -c "import npc_samstim; print(npc_samstim.__version__)"
 ```
 
-### Using PDM
+### Using uv
 
-The project uses [PDM](https://pdm.fming.dev) for reproducible dev environments, with pre-defined `pyproject.toml` configuration for tools
-While working on the project, use PDM to manage dependencies:
-- add dependencies: `pdm add numpy pandas`
-  - add dev dependencies: `pdm add -G dev mypy`
-- remove dependencies correctly: `pdm remove numpy`   # does nothing because pandas still needs numpy!
-- update the environment to reflect changes in `pyproject.toml`: `pdm update`
-Always commit & push `pdm.lock` to share the up-to-date dev environment
+The project uses [uv](https://docs.astral.sh/uv/) for reproducible dev environments, with pre-defined `pyproject.toml` configuration for tools.
+While working on the project, use uv to manage dependencies:
+- add dependencies: `uv add numpy pandas`
+  - add development dependencies: `uv add --group testing mypy`
+- remove dependencies: `uv remove numpy`
+- update the environment and lockfile: `uv lock`
+Always commit `uv.lock` to share the up-to-date development environment.
 
 
 ## Development (internal contributors)
@@ -60,16 +59,16 @@ Always commit & push `pdm.lock` to share the up-to-date dev environment
 2. Add simple doctests to functions or more elaborate tests to modules in `tests`
 
 3. If you updated the project's dependencies (or you pulled changes):
-  - run `pdm update`
+  - run `uv lock`
   - if it fails due to dependencies you added, follow any error messages to resolve dependency version conflicts
-  - when it doesn't fail, commit any changes to `pdm.lock` along with the changes to `pyproject.toml`
+  - when it doesn't fail, commit any changes to `uv.lock` along with the changes to `pyproject.toml`
 
-4. Run tests with `pdm run test`
+4. Run tests with `uv run task test`
   - mypy will check all functions that contain type annotations in their signature
   - pytest will run doctests and any tests in the `tests` dir
 
 5. If you updated the documentation or the project dependencies:
-  - run `pdm run doc`
+  - run `uv run task docs`
   - go to http://localhost:8000 and check that everything looks good
  
 - if you are unsure about how to fix a test, just push your changes - the continuous integration will fail on Github and someone else can have a look
@@ -83,5 +82,4 @@ Always commit & push `pdm.lock` to share the up-to-date dev environment
 ## Updating from the original template
 With a clean working directory, run `pipx run copier update --defaults`.
 
-See [here](https://github.com/AllenInstitute/copier-pdm-npc/blob/main/README.md)
-for more info.
+See the [uv documentation](https://docs.astral.sh/uv/) for more info.
