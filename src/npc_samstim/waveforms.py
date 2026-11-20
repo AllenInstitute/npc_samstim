@@ -1424,8 +1424,15 @@ def get_stim_latencies_from_sync(
     sync: npc_sync.SyncPathOrDataset,
     waveform_type: Literal["sound", "audio", "opto"],
     line_index_or_label: int | str | None = None,
+    trial_indices: Iterable[int] | None = None,
 ) -> tuple[StimRecording | None, ...]:
     """Get stimulus timing from a hardware marker line on sync.
+
+    Each trial is matched to the first rising edge on the line after its trigger, so
+    every trial processed must have produced an edge on this line. When trials for
+    different devices are interleaved (eg OptoTagging with laser_488 and laser_633 on
+    separate sync lines), pass `trial_indices` for the trials that drove this line:
+    other trials are skipped (None), rather than being matched to a later trial's edge.
 
     Opto offsets use the falling edge nearest the reconstructed end of active
     output, bounded before the next onset. If an opto falling edge is missing,
@@ -1467,11 +1474,12 @@ def get_stim_latencies_from_sync(
         if "opto" in waveform_type
         else np.array([])
     )
+    included = None if trial_indices is None else {int(i) for i in trial_indices}
     recordings: list[StimRecording | None] = [None] * len(trigger_times)
     for idx, (trigger_time, waveform) in enumerate(
         zip(trigger_times, get_waveforms_from_stim_file(stim, waveform_type))
     ):
-        if waveform is None:
+        if waveform is None or (included is not None and idx not in included):
             continue
         assert trigger_time is not None
         onset_idx = np.searchsorted(stim_onsets, trigger_time, side="right")

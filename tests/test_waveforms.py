@@ -294,3 +294,55 @@ def test_trial_opto_voltage_from_power_rejects_unknown_power() -> None:
     }
     with pytest.raises(ValueError, match="no unique"):
         waveforms._trial_opto_voltage_from_power(stim_data, 1)
+
+
+def test_get_stim_latencies_from_sync_skips_trials_for_other_lines(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Interleaved laser_488/laser_633 trials: each trial drives only its own sync line,
+    so trials for the other laser must not be matched to a later trial's edge."""
+    # trial devices: 488, 633, 488, 633; triggers at 1, 2, 3, 4 s; 5 ms latency
+    vsyncs = np.array([1.0, 2.0, 3.0, 4.0])
+    edges = {
+        "laser_488": (np.array([1.005, 3.005]), np.array([1.015, 3.015])),
+        "laser_633": (np.array([2.005, 4.005]), np.array([2.015, 4.015])),
+    }
+
+    class FakeSync:
+        def get_rising_edges(self, line, units="samples"):
+            return edges[line][0]
+
+        def get_falling_edges(self, line, units="samples"):
+            return edges[line][1]
+
+    waveform = waveforms.SimpleWaveform(
+        name="square", modality="opto", sampling_rate=1000, samples=np.ones(10)
+    )
+    stim = {"trialOptoDur": np.full(4, 0.010)}
+    monkeypatch.setattr(waveforms.npc_stim, "get_h5_stim_data", lambda _: stim)
+    monkeypatch.setattr(waveforms.npc_sync, "get_sync_data", lambda _: FakeSync())
+    monkeypatch.setattr(
+        waveforms.npc_stim,
+        "get_stim_frame_times",
+        lambda path, **_: {path: vsyncs},
+    )
+    monkeypatch.setattr(waveforms.npc_stim, "assert_stim_times", lambda x: x)
+    monkeypatch.setattr(
+        waveforms.npc_stim, "get_stim_trigger_frames", lambda *_, **__: (0, 1, 2, 3)
+    )
+    monkeypatch.setattr(
+        waveforms, "get_waveforms_from_stim_file", lambda *_: (waveform,) * 4
+    )
+
+    for line, trials in (("laser_488", (0, 2)), ("laser_633", (1, 3))):
+        recordings = waveforms.get_stim_latencies_from_sync(
+            "stim.hdf5", object(), "opto", line, trial_indices=trials
+        )
+        assert len(recordings) == 4
+        for idx, rec in enumerate(recordings):
+            if idx not in trials:
+                assert rec is None
+                continue
+            assert rec is not None
+            assert rec.onset_time_on_sync == pytest.approx(idx + 1.005)
+            assert rec.offset_time_on_sync == pytest.approx(idx + 1.015)
