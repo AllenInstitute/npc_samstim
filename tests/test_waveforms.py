@@ -234,3 +234,63 @@ def test_generate_opto_waveforms_selects_offset_for_each_trial_device(
     assert generated[1] is not None
     assert generated[0].samples[0] == pytest.approx(0.2)
     assert generated[1].samples[0] == pytest.approx(0.4)
+
+
+def test_generate_opto_waveforms_from_trial_opto_power(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OptoTagging.py (samgale/DynamicRoutingTask@55e88fa) saves `trialOptoPower` and an
+    `optoVoltage[device][str(power)]` table instead of `trialOptoVoltage`."""
+    stim_data = {
+        "trialOptoDur": np.array([0.010, 0.200, 0.010]),
+        "trialOptoPower": np.array([5.0, 10.0, np.nan]),
+        "trialOptoOnsetFrame": np.array([1, 2, 3]),
+        "trialOptoDevice": np.array(
+            [b"['laser_633']", b"['laser_488']", b"['laser_488']"], dtype=object
+        ),
+        "optoVoltage": {
+            "laser_488": {"5.0": np.array(1.2), "10.0": np.array(2.25)},
+            "laser_633": {"5.0": np.array(1.3), "10.0": np.array(2.2)},
+        },
+        "optoOnRamp": np.array(0.001),
+        "optoOffRamp": np.array(0.001),
+        "optoOffsetVoltage": {
+            "laser_488": np.array(0.1),
+            "laser_633": np.array(0.2),
+        },
+        "optoSampleRate": np.array(2000),
+    }
+    monkeypatch.setattr(waveforms.npc_stim, "get_h5_stim_data", lambda _: stim_data)
+    monkeypatch.setattr(waveforms.npc_stim, "get_num_trials", lambda _: 3)
+
+    np.testing.assert_array_equal(
+        waveforms._trial_opto_voltage_from_power(stim_data, 3),
+        [1.3, 2.25, np.nan],
+    )
+    generated = waveforms.generate_opto_waveforms(stim_data)
+    assert generated[2] is None  # NaN power: no stim
+    for trialnum, (amp, dur, offset) in enumerate(
+        [(1.3, 0.010, 0.2), (2.25, 0.200, 0.1)]
+    ):
+        expected = waveforms.get_cached_opto_pulse_waveform(
+            sampleRate=2000,
+            amp=amp,
+            dur=dur,
+            delay=0.0,
+            freq=0.0,
+            onRamp=0.001,
+            offRamp=0.001,
+            offset=offset,
+        )
+        assert generated[trialnum] is not None
+        np.testing.assert_array_equal(generated[trialnum].samples, expected)
+
+
+def test_trial_opto_voltage_from_power_rejects_unknown_power() -> None:
+    stim_data = {
+        "trialOptoPower": np.array([7.0]),
+        "trialOptoDevice": np.array(["['laser_488']"]),
+        "optoVoltage": {"laser_488": {"5.0": np.array(1.2)}},
+    }
+    with pytest.raises(ValueError, match="no unique"):
+        waveforms._trial_opto_voltage_from_power(stim_data, 1)

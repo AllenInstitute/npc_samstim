@@ -532,6 +532,67 @@ def generate_sound_waveforms(
     return tuple(waveforms)
 
 
+def _parse_opto_devices(devices: Any) -> tuple[str, ...]:
+    """Normalize a TaskControl opto device entry (eg b"['laser_488']", 'laser_488', or a
+    sequence) to a tuple of device names."""
+    if isinstance(devices, bytes):
+        devices = devices.decode()
+    if isinstance(devices, str):
+        try:
+            devices = ast.literal_eval(devices)
+        except (SyntaxError, ValueError):
+            devices = (devices,)
+    if isinstance(devices, str) or not isinstance(devices, Iterable):
+        devices = (devices,)
+    return tuple(d.decode() if isinstance(d, bytes) else str(d) for d in devices)
+
+
+def _trial_opto_voltage_from_power(
+    stim_data: Any, nTrials: int, device_index: int | None = None
+) -> npt.NDArray[np.float64]:
+    """Per-trial opto voltage for stim files that store `trialOptoPower` (mW) instead of
+    `trialOptoVoltage` (OptoTagging.py from samgale/DynamicRoutingTask@55e88fa).
+
+    The task builds each waveform with `amp=optoVoltage[device][str(power)]`, so the voltage
+    is looked up from the saved `optoVoltage` table rather than recomputed from calibration.
+    Trials with NaN power get NaN voltage (and are skipped).
+    """
+    if "trialOptoPower" not in stim_data or "optoVoltage" not in stim_data:
+        raise KeyError(
+            "Stim file has neither `trialOptoVoltage` nor `trialOptoPower` + `optoVoltage`"
+        )
+    power = np.asarray(stim_data["trialOptoPower"][:nTrials], dtype=float)
+    if power.ndim > 1:
+        power = power[:, device_index or 0]
+    voltage_table = stim_data["optoVoltage"]
+    trial_devices = stim_data.get("trialOptoDevice")
+    names = tuple(voltage_table.keys())
+    if trial_devices is None and len(names) != 1:
+        raise ValueError(
+            f"Multiple opto devices in `optoVoltage` ({names}) without `trialOptoDevice`"
+        )
+    voltage = np.full(nTrials, np.nan)
+    for trialnum in range(nTrials):
+        pwr = power[trialnum]
+        if np.isnan(pwr):
+            continue
+        if trial_devices is None:
+            device_name = names[0]
+        else:
+            device_name = _parse_opto_devices(trial_devices[trialnum])[
+                device_index or 0
+            ]
+        table = voltage_table[device_name]
+        matches = [k for k in table.keys() if np.isclose(float(k), pwr)]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Trial {trialnum}: no unique `optoVoltage[{device_name!r}]` entry for "
+                f"power {pwr} mW (available: {list(table.keys())})"
+            )
+        voltage[trialnum] = float(np.asarray(table[matches[0]][()]).flat[0])
+    return voltage
+
+
 def generate_opto_waveforms(
     stim_file_or_dataset: npc_stim.StimPathOrDataset, device_index: int | None = None
 ) -> tuple[Waveform | None, ...]:
@@ -546,7 +607,12 @@ def generate_opto_waveforms(
     nTrials = npc_stim.get_num_trials(stim_data)
 
     trialOptoDur = stim_data["trialOptoDur"][:nTrials].squeeze()
-    trialOptoVoltage = stim_data["trialOptoVoltage"][:nTrials].squeeze()
+    if "trialOptoVoltage" in stim_data:
+        trialOptoVoltage = stim_data["trialOptoVoltage"][:nTrials].squeeze()
+    else:
+        trialOptoVoltage = _trial_opto_voltage_from_power(
+            stim_data, nTrials, device_index
+        )
 
     # TODO update `trialOptoDelay` to accommodate multiple devices (task only)
     # Sam says: there is a trialOptoDelay value for each device (because the
@@ -627,18 +693,7 @@ def generate_opto_waveforms(
                 )
             devices = global_device[()]
 
-        if isinstance(devices, bytes):
-            devices = devices.decode()
-        if isinstance(devices, str):
-            try:
-                devices = ast.literal_eval(devices)
-            except (SyntaxError, ValueError):
-                devices = (devices,)
-        if isinstance(devices, str) or not isinstance(devices, Iterable):
-            devices = (devices,)
-        selected_device = tuple(devices)[device_index or 0]
-        if isinstance(selected_device, bytes):
-            selected_device = selected_device.decode()
+        selected_device = _parse_opto_devices(devices)[device_index or 0]
         if selected_device not in device_names:
             raise ValueError(
                 f"Opto offset voltage not found for device {selected_device!r}"
